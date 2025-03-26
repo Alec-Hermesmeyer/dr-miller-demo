@@ -295,7 +295,7 @@ const handleExampleQuestion = (question: string): void => {
               Enter Your OpenAI API Key
             </h2>
             <p className="text-sm text-gray-600 mb-4">
-              This demo requires an OpenAI API key to function. Your key stays in your browser and is not saved or sent anywhere except to OpenAI's API.
+              This demo requires an OpenAI API key to function. Your key stays in your browser and is not saved or sent anywhere except to OpenAI&apos;s API.
             </p>
             <form onSubmit={handleSetKey} className="space-y-4">
               <div>

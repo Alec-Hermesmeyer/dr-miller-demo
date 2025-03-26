@@ -4,13 +4,16 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-
+import { LockIcon, MailIcon, PhoneIcon, UserIcon, UserPlusIcon } from "lucide-react"
 
 export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="w-96 max-w-md">
+      <div className="w-full max-w-md">
         <div className="text-center mb-8">
+          <div className="inline-block p-4 rounded-full bg-blue-100 mb-4">
+            <UserPlusIcon className="h-12 w-12 text-blue-700" />
+          </div>
           <h1 className="text-3xl font-bold text-gray-900">Join Us</h1>
           <p className="text-gray-600 mt-2">Create your personal health account</p>
         </div>
@@ -27,7 +30,7 @@ export default function RegisterPage() {
                 <Label htmlFor="first-name" className="text-sm font-medium">First Name</Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                   
+                    <UserIcon className="h-4 w-4 text-gray-400" />
                   </div>
                   <Input 
                     id="first-name" 
@@ -40,7 +43,7 @@ export default function RegisterPage() {
                 <Label htmlFor="last-name" className="text-sm font-medium">Last Name</Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                    
+                    <UserIcon className="h-4 w-4 text-gray-400" />
                   </div>
                   <Input 
                     id="last-name" 
@@ -55,7 +58,7 @@ export default function RegisterPage() {
               <Label htmlFor="email" className="text-sm font-medium">Email Address</Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                 
+                  <MailIcon className="h-5 w-5 text-gray-400" />
                 </div>
                 <Input 
                   id="email" 
@@ -70,7 +73,7 @@ export default function RegisterPage() {
               <Label htmlFor="phone" className="text-sm font-medium">Phone Number</Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                  
+                  <PhoneIcon className="h-5 w-5 text-gray-400" />
                 </div>
                 <Input 
                   id="phone" 
@@ -85,7 +88,7 @@ export default function RegisterPage() {
               <Label htmlFor="password" className="text-sm font-medium">Password</Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                 
+                  <LockIcon className="h-5 w-5 text-gray-400" />
                 </div>
                 <Input 
                   id="password" 
@@ -100,7 +103,7 @@ export default function RegisterPage() {
               <Label htmlFor="confirm-password" className="text-sm font-medium">Confirm Password</Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                  
+                  <LockIcon className="h-5 w-5 text-gray-400" />
                 </div>
                 <Input 
                   id="confirm-password" 

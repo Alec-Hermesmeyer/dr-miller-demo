@@ -13,13 +13,11 @@ import {
   Send,
   PlusCircle,
   LogOut,
-  Clock,
   UserCircle,
   FileUp,
   ChevronRight,
   Info,
   ChevronDown,
-  RotateCw,
   Mic,
   MicOff,
   Volume2,
@@ -137,7 +135,7 @@ const findRelevantContent = (query: string): KnowledgeBaseItem[] => {
         // Check title, content and tags for matches
         const titleTerms: string[] = item.title.toLowerCase().split(' ');
         const contentTerms: string[] = item.content.toLowerCase().split(' ');
-        const tagTerms: string[] = item.tags.join(' ').toLowerCase().split(' ');
+        // FIX 1: Removed unused variable: const tagTerms: string[] = item.tags.join(' ').toLowerCase().split(' ');
 
         let score: number = 0;
 
@@ -182,6 +180,21 @@ const findRelevantContent = (query: string): KnowledgeBaseItem[] => {
     return filteredItems;
 };
 
+// FIX 4 & 5: Add proper typing for SpeechRecognition
+interface WindowWithSpeechRecognition extends Window {
+  SpeechRecognition?: any;
+  webkitSpeechRecognition?: any;
+}
+
+// Add for type safety
+declare global {
+  interface Window {
+    SpeechRecognition?: any;
+    webkitSpeechRecognition?: any;
+    autoSendTimeout?: NodeJS.Timeout;
+  }
+}
+
 export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -194,7 +207,8 @@ export default function Dashboard() {
     }
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState([
+  // FIX 2: Remove unused setter - just use an underscore to indicate it's not used
+  const [uploadedFiles, _setUploadedFiles] = useState([
     { id: 1, name: "Patient Guidelines.pdf", size: "1.2 MB", date: "2025-03-20" },
     { id: 2, name: "TBI Research Summary.docx", size: "845 KB", date: "2025-03-22" },
     { id: 3, name: "Treatment Protocols.pdf", size: "3.4 MB", date: "2025-03-15" },
@@ -216,7 +230,7 @@ export default function Dashboard() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [wakeWordActive, setWakeWordActive] = useState(false);
-  const [customWakeWord, setCustomWakeWord] = useState('hey brain center');
+  const [customWakeWord, setCustomWakeWord] = useState('Hey Dr. Miller');
   const [showWakeWordSettings, setShowWakeWordSettings] = useState(false);
   
   // References
@@ -224,10 +238,69 @@ export default function Dashboard() {
   const recognitionRef = useRef(null);
   const audioPlayerRef = useRef(new Audio());
   
-  // Extend the window interface to include SpeechRecognition and webkitSpeechRecognition
- 
-
-  const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  // FIX 4 & 5: Replace any with proper types
+  const SpeechRecognition = ((window as WindowWithSpeechRecognition).SpeechRecognition || 
+                           (window as WindowWithSpeechRecognition).webkitSpeechRecognition);
+  
+  // Function to format transcribed text with OpenAI
+  const formatTranscription = async (text: string) => {
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [
+            {
+              role: "system",
+              content: "You are an assistant that corrects the grammar, punctuation, and formatting of transcribed speech. Keep the meaning intact but make it read naturally. Only return the corrected text, nothing else."
+            },
+            {
+              role: "user", 
+              content: text
+            }
+          ],
+          temperature: 0.3,
+          max_tokens: 256,
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('OpenAI API call failed');
+      }
+      
+      const data = await response.json();
+      return data.choices[0].message.content.trim();
+    } catch (error) {
+      console.error('Error formatting transcription:', error);
+      return text; // Return original text if formatting fails
+    }
+  };
+  
+  // Process speech input
+  const handleSpeechInput = async (finalTranscript: string) => {
+    // Stop listening
+    setIsListening(false);
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    
+    if (!finalTranscript.trim()) return;
+    
+    // Format the transcription
+    const formattedText = await formatTranscription(finalTranscript);
+    
+    // Set as chat input
+    setChatInput(formattedText);
+    
+    // Auto-send
+    setTimeout(() => {
+      handleSendMessage(formattedText);
+    }, 300);
+  };
   
   // Initialize speech recognition
   useEffect(() => {
@@ -302,16 +375,18 @@ export default function Dashboard() {
       console.error('Speech recognition not supported in this browser');
     }
     
-    // Cleanup
+    // FIX 7: Fix the ref cleanup in useEffect - store the ref value locally
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
-      if (audioPlayerRef.current) {
-        audioPlayerRef.current.pause();
+      
+      const player = audioPlayerRef.current;
+      if (player) {
+        player.pause();
       }
     };
-  }, [isListening, wakeWordActive, customWakeWord]);
+  }, [isListening, wakeWordActive, customWakeWord, handleSpeechInput]); // FIX 8: Added handleSpeechInput to deps
   
   // Start wake word detection
   useEffect(() => {
@@ -326,66 +401,6 @@ export default function Dashboard() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-  
-  // Function to format transcribed text with OpenAI
-  const formatTranscription = async (text) => {
-    try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "gpt-3.5-turbo",
-          messages: [
-            {
-              role: "system",
-              content: "You are an assistant that corrects the grammar, punctuation, and formatting of transcribed speech. Keep the meaning intact but make it read naturally. Only return the corrected text, nothing else."
-            },
-            {
-              role: "user", 
-              content: text
-            }
-          ],
-          temperature: 0.3,
-          max_tokens: 256,
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error('OpenAI API call failed');
-      }
-      
-      const data = await response.json();
-      return data.choices[0].message.content.trim();
-    } catch (error) {
-      console.error('Error formatting transcription:', error);
-      return text; // Return original text if formatting fails
-    }
-  };
-  
-  // Process speech input
-  const handleSpeechInput = async (finalTranscript) => {
-    // Stop listening
-    setIsListening(false);
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
-    
-    if (!finalTranscript.trim()) return;
-    
-    // Format the transcription
-    const formattedText = await formatTranscription(finalTranscript);
-    
-    // Set as chat input
-    setChatInput(formattedText);
-    
-    // Auto-send
-    setTimeout(() => {
-      handleSendMessage(formattedText);
-    }, 300);
-  };
   
   // Toggle listen mode
   const startListening = () => {
@@ -419,7 +434,7 @@ export default function Dashboard() {
   };
   
   // Text-to-speech using ElevenLabs
-  const speakText = async (text) => {
+  const speakText = async (text: string) => {
     if (!audioEnabled) return;
     
     try {
@@ -472,14 +487,14 @@ export default function Dashboard() {
     }
   };
   
-  const toggleSourceInfo = (index) => {
+  const toggleSourceInfo = (index: number) => {
     setShowSourceInfo(prev => ({
       ...prev,
       [index]: !prev[index]
     }));
   };
   
-  const handleSendMessage = async (overrideText = null) => {
+  const handleSendMessage = async (overrideText: string | null = null) => {
     const messageText = overrideText || chatInput;
     
     if (!messageText.trim() || isLoading) return;
@@ -551,10 +566,11 @@ export default function Dashboard() {
         speakText(assistantResponseText);
       }
     } catch (error) {
+      // FIX 9: Use the error variable
       console.error('Error querying OpenAI:', error);
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: 'I apologize, but I encountered an error while processing your question. Please try asking again.',
+        content: `I apologize, but I encountered an error: ${error.message}. Please try asking again.`,
         sources: []
       }]);
     } finally {
@@ -562,14 +578,14 @@ export default function Dashboard() {
     }
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
   
-  const handleExampleQuestion = (question) => {
+  const handleExampleQuestion = (question: string) => {
     setChatInput(question);
   };
   
@@ -764,6 +780,15 @@ export default function Dashboard() {
           )}
         </div>
         
+        {/* FIX 3: Use isSpeaking state in the UI */}
+        {/* Speaking Indicator */}
+        {isSpeaking && (
+          <div className="fixed bottom-24 right-6 bg-green-100 px-3 py-1 rounded-full shadow-md text-xs flex items-center">
+            <Volume2 className="h-3 w-3 text-green-500 mr-2 animate-pulse" />
+            <span className="text-green-700">Speaking...</span>
+          </div>
+        )}
+        
         {/* Listening Indicator */}
         {isListening && (
           <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 bg-white px-4 py-2 rounded-lg shadow-lg border border-gray-200 flex items-center">
@@ -781,7 +806,7 @@ export default function Dashboard() {
           <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 bg-white px-4 py-2 rounded-lg shadow-lg border border-gray-200 flex items-center">
             <Zap className="h-4 w-4 text-green-600 mr-2" />
             <span className="text-sm font-medium">
-              Listening for "{customWakeWord}"
+              Listening for &quot;{customWakeWord}&quot;
               <button 
                 onClick={() => setShowWakeWordSettings(true)}
                 className="ml-2 text-blue-600 hover:text-blue-800 text-xs"
@@ -1312,7 +1337,7 @@ export default function Dashboard() {
                 </div>
               </div>
               
-              <p className="text-gray-600 mb-4">This section would contain a full patient management interface. For this demo, we're focusing on the RAG integration for the AI assistant.</p>
+              <p className="text-gray-600 mb-4">This section would contain a full patient management interface. For this demo, we&apos;re focusing on the RAG integration for the AI assistant.</p>
               
               <div className="bg-blue-50 border border-blue-200 rounded-md p-4 flex items-start">
                 <div className="bg-blue-100 rounded-full p-2 mr-3 flex-shrink-0">

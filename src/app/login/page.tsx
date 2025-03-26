@@ -9,9 +9,11 @@ import { LockIcon, MailIcon, UserCircle } from "lucide-react"
 export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="w-96 max-w-lg">
+      <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          
+          <div className="inline-block p-4 rounded-full bg-blue-100 mb-4">
+            <UserCircle className="h-12 w-12 text-blue-700" />
+          </div>
           <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
           <p className="text-gray-600 mt-2">Access your personal health dashboard</p>
         </div>
@@ -27,7 +29,7 @@ export default function LoginPage() {
               <Label htmlFor="email" className="text-sm font-medium">Email Address</Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                  
+                  <MailIcon className="h-5 w-5 text-gray-400" />
                 </div>
                 <Input 
                   id="email" 
@@ -47,7 +49,7 @@ export default function LoginPage() {
               </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                 
+                  <LockIcon className="h-5 w-5 text-gray-400" />
                 </div>
                 <Input 
                   id="password" 
