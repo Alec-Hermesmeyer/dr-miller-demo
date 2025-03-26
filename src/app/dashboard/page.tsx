@@ -1319,7 +1319,7 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
                 </div>
                 <div className="mt-4 flex justify-center">
                   <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm">
-                    Log Today's Progress
+                    Log Today&apos;s Progress
                   </button>
                 </div>
               </div>
