@@ -269,7 +269,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   // Video mapping
   const videos: Record<'Will the treatment hurt?' | 'How can I schedule a consultation?' | 'Can I keep doing my regular daily routine while getting treatment?' | 'default', string> = {
     'Will the treatment hurt?': 'Will the treatment hurt_.mp4',
-    'How can I schedule a consultation?': 'How can I schedule a consultation 1.mp4',
+    'How can I schedule a consultation?': 'How can i schedule a consultation 1.mp4',
     'Can I keep doing my regular daily routine while getting treatment?': 'Can I keep doing my regular daily routine while getting treatment_.mp4',
     'default': 'Finding the answer.mp4'
   };
