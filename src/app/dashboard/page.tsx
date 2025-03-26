@@ -238,7 +238,7 @@ export default function Dashboard() {
   
   // References
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const recognitionRef = useRef(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const audioPlayerRef = useRef(new Audio());
   
   // FIX 4 & 5: Replace any with proper types
