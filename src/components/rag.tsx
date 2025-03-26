@@ -9,9 +9,8 @@ import {
   ChevronDown,
   RotateCw,
   Clock,
-  Search,
   UserCircle,
-  X
+  
 } from 'lucide-react';
 
 // Hard-coded knowledge base about Brain Treatment Center Dallas

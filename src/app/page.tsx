@@ -226,7 +226,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <p className="text-gray-700 italic">
-                "The treatment I received from Dr. Miller changed my life. After my accident, I struggled with daily tasks, but the personalized care plan helped me regain my independence. The online portal made it easy to ask questions between appointments."
+              &quot;The treatment I received from Dr. Miller changed my life. After my accident, I struggled with daily tasks, but the personalized care plan helped me regain my independence. The online portal made it easy to ask questions between appointments.&quot;
               </p>
             </div>
             
@@ -244,7 +244,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <p className="text-gray-700 italic">
-                "After years of struggling with depression, Dr. Miller's approach was refreshingly effective. Being able to ask questions through the AI assistant between appointments helped me stay on track with my treatment plan."
+                &quot;After years of struggling with depression, Dr. Miller&apos;s approach was refreshingly effective. Being able to ask questions through the AI assistant between appointments helped me stay on track with my treatment plan.&quot;
               </p>
             </div>
           </div>
