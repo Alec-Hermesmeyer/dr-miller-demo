@@ -402,7 +402,7 @@ export default function PatientDashboard() {
   }, []);
   
   // Use SpeechRecognition - moved to useEffect for client-side only
-  let SpeechRecognition: any = null;
+    const SpeechRecognition: any = null;
   
   // Function to format transcribed text with OpenAI
   const formatTranscription = useCallback(async (text: string): Promise<string> => {
