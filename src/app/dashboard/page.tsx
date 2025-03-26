@@ -253,8 +253,8 @@ interface VideoPlayerProps {
   currentVideo: string;
   isPlaying: boolean;
   onVideoEnd: () => void;
-  onQuestionClick: (questionKey: string) => void;
-  onCustomQuestionSubmit: (e: React.FormEvent<HTMLFormElement> & { target: { elements: { customQuestion: HTMLInputElement } } }) => void;
+  onQuestionClick: (questionKey: 'Will the treatment hurt?' | 'How can I schedule a consultation?' | 'Can I keep doing my regular daily routine while getting treatment?' | 'default') => void;
+  onCustomQuestionSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
 }
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
@@ -267,10 +267,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   
   // Video mapping
-  const videos = {
-    'Will the treatment hurt?': 'Will the treatment hurt*.mp4',
+  const videos: Record<'Will the treatment hurt?' | 'How can I schedule a consultation?' | 'Can I keep doing my regular daily routine while getting treatment?' | 'default', string> = {
+    'Will the treatment hurt?': 'Will the treatment hurt_.mp4',
     'How can I schedule a consultation?': 'how can I schedule a consultation 1.mp4',
-    'Can I keep doing my regular daily routine while getting treatment?': 'Can I keep doing my regular daily routine while getting treatment*.mp4',
+    'Can I keep doing my regular daily routine while getting treatment?': 'Can I keep doing my regular daily routine while getting treatment_.mp4',
     'default': 'Finding the answer.mp4'
   };
 
@@ -309,7 +309,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         <video 
           ref={videoRef}
           className="w-full h-64 object-cover"
-          src={videos[currentVideo as keyof typeof videos] || videos['default']}
+          src={videos[currentVideo as keyof typeof videos]}
           controls={true}
           autoPlay={isPlaying}
           onEnded={handleVideoEnd}
@@ -323,7 +323,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           {Object.keys(videos).filter(key => key !== 'default').map((question) => (
             <button
               key={question}
-              onClick={() => onQuestionClick(question)}
+              onClick={() => onQuestionClick(question as 'default' | 'Will the treatment hurt?' | 'How can I schedule a consultation?' | 'Can I keep doing my regular daily routine while getting treatment?')}
               className="px-3 py-2 bg-blue-50 text-blue-700 rounded-md text-sm hover:bg-blue-100 transition-colors text-left"
             >
               {question}
@@ -401,9 +401,8 @@ export default function PatientDashboard() {
     };
   }, []);
   
-  // Use SpeechRecognition
-  const SpeechRecognition = ((window as WindowWithSpeechRecognition).SpeechRecognition || 
-                           (window as WindowWithSpeechRecognition).webkitSpeechRecognition);
+  // Use SpeechRecognition - moved to useEffect for client-side only
+  let SpeechRecognition: any = null;
   
   // Function to format transcribed text with OpenAI
   const formatTranscription = useCallback(async (text: string): Promise<string> => {
@@ -445,6 +444,8 @@ export default function PatientDashboard() {
   
   // Process speech input
   const handleSpeechInput = useCallback(async (finalTranscript: string) => {
+    if (typeof window === 'undefined') return;
+    
     // Don't process if the transcript is empty
     if (!finalTranscript?.trim()) return;
 
@@ -478,11 +479,7 @@ export default function PatientDashboard() {
   }, [formatTranscription, setChatInput]);
   
   // Handle video question click - only plays the video without sending to chat
-interface VideoQuestionClickHandler {
-    (questionKey: string): void;
-}
-
-const handleVideoQuestionClick: VideoQuestionClickHandler = useCallback((questionKey) => {
+const handleVideoQuestionClick = useCallback((questionKey: 'Will the treatment hurt?' | 'How can I schedule a consultation?' | 'Can I keep doing my regular daily routine while getting treatment?' | 'default') => {
     // Just set the video and play it, without sending to the chatbot
     setCurrentVideo(questionKey);
     setIsVideoPlaying(true);
@@ -592,17 +589,18 @@ const handleVideoQuestionClick: VideoQuestionClickHandler = useCallback((questio
   }, [chatInput, isLoading, audioEnabled]);
   
   // Handle custom question submit from video player
-interface CustomQuestionSubmitEvent extends React.FormEvent<HTMLFormElement> {
-    target: EventTarget & {
-        elements: {
-            customQuestion: HTMLInputElement;
-        };
-    };
+interface CustomQuestionFormElements extends HTMLFormControlsCollection {
+    customQuestion: HTMLInputElement;
 }
 
-const handleCustomQuestionSubmit = useCallback((e: CustomQuestionSubmitEvent) => {
+interface CustomQuestionForm extends HTMLFormElement {
+    elements: CustomQuestionFormElements;
+}
+
+const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const customQuestion = e.target.elements.customQuestion.value;
+    const form = e.currentTarget as CustomQuestionForm;
+    const customQuestion = form.elements.customQuestion.value;
     
     if (customQuestion.trim()) {
         // Set as chat input and send
@@ -615,15 +613,22 @@ const handleCustomQuestionSubmit = useCallback((e: CustomQuestionSubmitEvent) =>
         setShowVideoPlayer(true); // Ensure video player is visible
         
         // Clear the input field
-        e.target.elements.customQuestion.value = '';
+        form.elements.customQuestion.value = '';
     }
 }, [handleSendMessage]);
   
   // ==== IMPROVED SPEECH RECOGNITION IMPLEMENTATION ====
   
-  // Initialize speech recognition - only called once
+  // Initialize on client-side only
   useEffect(() => {
-    if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
+    // Set up SpeechRecognition
+    const LocalSpeechRecognition = (window as WindowWithSpeechRecognition).SpeechRecognition || 
+                                   (window as WindowWithSpeechRecognition).webkitSpeechRecognition;
+    
+    if (!LocalSpeechRecognition) {
       console.error('Speech recognition not supported in this browser');
       return;
     }
@@ -658,7 +663,7 @@ const handleCustomQuestionSubmit = useCallback((e: CustomQuestionSubmitEvent) =>
       }
       
       // Wake word detection mode
-      if (wakeWordActive && !isListening && wakeWordListeningRef.current) {
+      if (wakeWordActive && !isListening && wakeWordListeningRef.current && typeof window !== 'undefined') {
         // Use both interim and final for wake word to be more responsive
         const searchText = (finalTranscriptRef.current + interimTranscript).toLowerCase();
         const wakeWord = customWakeWord.toLowerCase();
@@ -702,21 +707,23 @@ const handleCustomQuestionSubmit = useCallback((e: CustomQuestionSubmitEvent) =>
         setTranscript(displayText);
         
         // When we get a final result, reset silence detection timer
-        if (finalTranscript) {
+        if (finalTranscript && typeof window !== 'undefined') {
           console.log("Final part received:", finalTranscript);
           
           // Reset the silence detection timer
-          if (window.silenceTimer) {
-            clearTimeout(window.silenceTimer);
-          }
-          
-          // Set a new silence timer - if no new speech is detected for 2.5 seconds, submit
-          window.silenceTimer = setTimeout(() => {
-            if (isListening && finalTranscriptRef.current.trim()) {
-              console.log("Silence detected after speech, processing:", finalTranscriptRef.current);
-              handleSpeechInput(finalTranscriptRef.current.trim());
+          if (typeof window !== 'undefined') {
+            if (window.silenceTimer) {
+              clearTimeout(window.silenceTimer);
             }
-          }, 2500); 
+            
+            // Set a new silence timer - if no new speech is detected for 2.5 seconds, submit
+            window.silenceTimer = setTimeout(() => {
+              if (isListening && finalTranscriptRef.current.trim()) {
+                console.log("Silence detected after speech, processing:", finalTranscriptRef.current);
+                handleSpeechInput(finalTranscriptRef.current.trim());
+              }
+            }, 2500);
+          } 
         }
       }
     };
@@ -786,6 +793,7 @@ const handleCustomQuestionSubmit = useCallback((e: CustomQuestionSubmitEvent) =>
   
   // Helper to restart wake word detection with error handling
   const restartWakeWordDetection = useCallback(() => {
+    if (typeof window === 'undefined') return;
     if (!wakeWordActive || window.wakeWordDetected || !recognitionRef.current) return;
     
     // Immediate delay to allow browser to release resources
@@ -819,6 +827,8 @@ const handleCustomQuestionSubmit = useCallback((e: CustomQuestionSubmitEvent) =>
   
   // Effect to manage wake word activation/deactivation
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     console.log(`Wake word mode ${wakeWordActive ? 'enabled' : 'disabled'}`);
     
     if (wakeWordActive) {
@@ -881,6 +891,8 @@ const handleCustomQuestionSubmit = useCallback((e: CustomQuestionSubmitEvent) =>
   
   // Clear all timers to prevent memory leaks
   const clearAllTimers = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    
     if (window.autoSendTimeout) {
       clearTimeout(window.autoSendTimeout);
       window.autoSendTimeout = undefined;
@@ -904,7 +916,7 @@ const handleCustomQuestionSubmit = useCallback((e: CustomQuestionSubmitEvent) =>
   
   // Toggle listen mode
   const startListening = useCallback(() => {
-    if (!recognitionRef.current) return;
+    if (typeof window === 'undefined' || !recognitionRef.current) return;
     
     // Disable wake word mode temporarily if active
     if (wakeWordActive) {
@@ -941,10 +953,9 @@ const handleCustomQuestionSubmit = useCallback((e: CustomQuestionSubmitEvent) =>
     // First mark as not listening to prevent auto-restart
     setIsListening(false);
     
-    // Clear silence timer
-    if (window.silenceTimer) {
+    // Check for silenceTimer
+    if (typeof window !== 'undefined' && window.silenceTimer) {
       clearTimeout(window.silenceTimer);
-      window.silenceTimer = undefined;
     }
     
     // Stop recognition
@@ -1354,7 +1365,7 @@ const handleCustomQuestionSubmit = useCallback((e: CustomQuestionSubmitEvent) =>
                 </div>
                 <div className="mt-4 flex justify-center">
                   <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm">
-                    Log Today&apos;s Progress
+                    Log Today's Progress
                   </button>
                 </div>
               </div>
