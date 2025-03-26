@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { 
   Brain, 
   Calendar, 
@@ -27,7 +27,18 @@ import {
   Clock,
   Activity,
   CheckCircle,
-  FileClock
+  FileClock,
+  X,
+  Bell,
+  AlertTriangle,
+  HelpCircle,
+  ChevronLeft,
+  BookOpen,
+  Download,
+  ArrowUp,
+  ArrowDown,
+  Coffee,
+  Sun
 } from 'lucide-react';
 
 // ==== CONFIGURATION ====
@@ -136,34 +147,136 @@ const KNOWLEDGE_BASE = [
     content: "The Brain Treatment Center of Dallas is located at 6080 S Hulen St, Suite 360, Fort Worth, TX 76132. You can reach us by phone at (817) 886-7735 or by email at info@braintreatmentdallas.com. Our hours of operation are Monday through Friday from 8:00 AM to 5:00 PM, with some Saturday appointments available by special arrangement. We're easily accessible from major highways and offer convenient parking.",
     category: "contact",
     tags: ["location", "address", "phone", "email", "directions", "hours"]
+  },
+  // New knowledge base entries for enhanced content
+  {
+    id: "lifestyle-nutrition",
+    title: "Nutrition Guidelines",
+    content: "Proper nutrition is an important component of brain health and can complement your MeRT treatment. Our nutritionists recommend a diet rich in omega-3 fatty acids, antioxidants, and anti-inflammatory foods. Specific recommendations include fatty fish (salmon, mackerel), leafy greens, berries, nuts, seeds, and olive oil. Limiting processed foods, refined sugars, and alcohol can also support brain function and overall health during your treatment.",
+    category: "lifestyle",
+    tags: ["nutrition", "diet", "brain health", "food", "supplements"]
+  },
+  {
+    id: "lifestyle-sleep",
+    title: "Sleep Optimization",
+    content: "Quality sleep is essential for brain recovery and maximizing the benefits of your MeRT treatment. We recommend maintaining a consistent sleep schedule, creating a relaxing bedtime routine, optimizing your sleep environment (cool, dark, quiet), limiting screen time before bed, and avoiding caffeine and alcohol close to bedtime. If you experience sleep disturbances, please discuss this with your provider as adjustments to your treatment protocol may be beneficial.",
+    category: "lifestyle",
+    tags: ["sleep", "insomnia", "rest", "recovery", "brain health"]
+  },
+  {
+    id: "research-studies",
+    title: "Recent MeRT Research",
+    content: "Recent clinical studies have shown promising results for MeRT treatment across multiple conditions. A 2023 study published in the Journal of Neurotherapeutics demonstrated significant improvements in executive function and emotional regulation for TBI patients following an 8-week MeRT protocol. Another study focused on treatment-resistant depression showed a 65% response rate and 42% remission rate among participants. Research is ongoing, with current trials exploring applications for Long COVID, fibromyalgia, and age-related cognitive decline.",
+    category: "research",
+    tags: ["studies", "clinical trials", "evidence", "outcomes", "research"]
   }
 ];
 
 // Example patient appointments
 const patientAppointments = [
-  { id: 1, date: "2025-03-28", time: "10:00 AM", type: "MeRT Treatment", provider: "Dr. Miller", status: "Confirmed" },
-  { id: 2, date: "2025-04-02", time: "2:30 PM", type: "Follow-up Consultation", provider: "Dr. Miller", status: "Confirmed" },
-  { id: 3, date: "2025-04-09", time: "11:15 AM", type: "MeRT Treatment", provider: "Dr. Wilson", status: "Pending" }
+  { id: 1, date: "2025-03-28", time: "10:00 AM", type: "MeRT Treatment", provider: "Dr. Miller", status: "Confirmed", location: "Dallas Office" },
+  { id: 2, date: "2025-04-02", time: "2:30 PM", type: "Follow-up Consultation", provider: "Dr. Miller", status: "Confirmed", location: "Dallas Office" },
+  { id: 3, date: "2025-04-09", time: "11:15 AM", type: "MeRT Treatment", provider: "Dr. Wilson", status: "Pending", location: "Plano Office" },
+  { id: 4, date: "2025-04-16", time: "9:30 AM", type: "MeRT Treatment", provider: "Dr. Miller", status: "Confirmed", location: "Dallas Office" }
 ];
 
-// Example treatment progress data
+// Enhanced treatment progress data with more metrics
 const treatmentProgress = [
-  { id: 1, date: "2025-03-10", sleepQuality: 6, anxiety: 7, focus: 5, mood: 6, notes: "Feeling fatigued after treatment" },
-  { id: 2, date: "2025-03-17", sleepQuality: 7, anxiety: 6, focus: 6, mood: 7, notes: "Noticed improved sleep" },
-  { id: 3, date: "2025-03-24", sleepQuality: 8, anxiety: 5, focus: 7, mood: 8, notes: "Concentration improving at work" }
+  { 
+    id: 1, 
+    date: "2025-03-10", 
+    sleepQuality: 6, 
+    anxiety: 7, 
+    focus: 5, 
+    mood: 6, 
+    energyLevel: 5,
+    socialEngagement: 4,
+    cognitivePerformance: 5,
+    notes: "Feeling fatigued after treatment but noticed slight improvement in concentration during afternoon."
+  },
+  { 
+    id: 2, 
+    date: "2025-03-17", 
+    sleepQuality: 7, 
+    anxiety: 6, 
+    focus: 6, 
+    mood: 7, 
+    energyLevel: 6,
+    socialEngagement: 5,
+    cognitivePerformance: 6,
+    notes: "Sleep quality improving. Able to fall asleep faster and fewer nighttime awakenings."
+  },
+  { 
+    id: 3, 
+    date: "2025-03-24", 
+    sleepQuality: 8, 
+    anxiety: 5, 
+    focus: 7, 
+    mood: 8, 
+    energyLevel: 7,
+    socialEngagement: 7,
+    cognitivePerformance: 7,
+    notes: "Concentration improving at work. Less anxious in social situations. Overall feeling more balanced."
+  }
 ];
 
-// Example patient profile
+// Example patient profile with more details
 const patientProfile = {
   name: "Sarah Johnson",
   age: 35,
   condition: "Anxiety & Depression",
   treatmentStart: "2025-03-10",
   treatmentPlan: "6-week MeRT Protocol",
-  doctor: "Dr. Spenser Miller",
+  completedSessions: 8,
+  totalPlannedSessions: 24,
+  doctor: "Dr. Spencer Miller",
   insurance: "Blue Cross Blue Shield",
-  nextAppointment: "March 28, 2025 at 10:00 AM"
+  nextAppointment: "March 28, 2025 at 10:00 AM",
+  medications: ["Sertraline 50mg", "Multivitamin"],
+  allergies: ["Penicillin"],
+  preferredPharmacy: "CVS Pharmacy - Oak Lawn",
+  emergencyContact: "John Johnson (Husband) - (214) 555-3456"
 };
+
+// New notifications system
+const patientNotifications = [
+  { 
+    id: 1, 
+    type: "appointment", 
+    title: "Upcoming Appointment", 
+    message: "You have a MeRT Treatment scheduled for tomorrow at 10:00 AM with Dr. Miller at our Dallas Office.", 
+    date: "2025-03-27", 
+    read: false,
+    action: "View Appointment"
+  },
+  { 
+    id: 2, 
+    type: "message", 
+    title: "Message from Dr. Miller", 
+    message: "I've reviewed your progress reports and I'm pleased with your improvements. Let's discuss further at your next appointment.", 
+    date: "2025-03-25", 
+    read: true,
+    action: "Read Message"
+  },
+  { 
+    id: 3, 
+    type: "resource", 
+    title: "New Resource Available", 
+    message: "We've added a new guide on sleep optimization techniques to support your treatment. Check it out in your Resources tab.", 
+    date: "2025-03-22", 
+    read: false,
+    action: "View Resource"
+  },
+  { 
+    id: 4, 
+    type: "reminder", 
+    title: "Progress Report Reminder", 
+    message: "Please complete your weekly symptom tracking before your next appointment to help us evaluate your treatment progress.", 
+    date: "2025-03-26", 
+    read: false,
+    action: "Complete Report"
+  }
+];
 
 // Simulated search function to find relevant content from our knowledge base
 interface KnowledgeBaseItem {
@@ -248,6 +361,166 @@ declare global {
   }
 }
 
+// Notification Component - New component for enhanced notifications
+interface NotificationProps {
+  notifications: typeof patientNotifications;
+  onDismiss: (id: number) => void;
+  onAction: (action: string, id: number) => void;
+  onMarkAllRead: () => void;
+}
+
+const NotificationPanel: React.FC<NotificationProps> = ({ 
+  notifications, 
+  onDismiss, 
+  onAction,
+  onMarkAllRead
+}) => {
+  const unreadCount = useMemo(() => {
+    return notifications.filter(notification => !notification.read).length;
+  }, [notifications]);
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'appointment': return <Calendar className="h-4 w-4 text-blue-500" />;
+      case 'message': return <MessageSquare className="h-4 w-4 text-green-500" />;
+      case 'resource': return <FileText className="h-4 w-4 text-purple-500" />;
+      case 'reminder': return <Bell className="h-4 w-4 text-yellow-500" />;
+      case 'alert': return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      default: return <Info className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-md border border-gray-200 w-80 max-h-96 overflow-hidden flex flex-col">
+      <div className="p-3 border-b border-gray-200 flex justify-between items-center bg-blue-50">
+        <h3 className="font-medium text-gray-800 flex items-center">
+          Notifications
+          {unreadCount > 0 && (
+            <span className="ml-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              {unreadCount}
+            </span>
+          )}
+        </h3>
+        <div className="flex space-x-2">
+          {unreadCount > 0 && (
+            <button 
+              onClick={onMarkAllRead}
+              className="text-xs text-blue-600 hover:text-blue-800"
+            >
+              Mark all read
+            </button>
+          )}
+        </div>
+      </div>
+      
+      <div className="overflow-y-auto flex-1">
+        {notifications.length === 0 ? (
+          <div className="p-4 text-center text-gray-500 text-sm">
+            No notifications
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {notifications.map((notification) => (
+              <div 
+                key={notification.id} 
+                className={`p-3 hover:bg-gray-50 transition-colors ${!notification.read ? 'bg-blue-50' : ''}`}
+              >
+                <div className="flex items-start">
+                  <div className="mr-3 mt-0.5">
+                    {getNotificationIcon(notification.type)}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start">
+                      <h4 className="text-sm font-medium text-gray-800">{notification.title}</h4>
+                      <button 
+                        onClick={() => onDismiss(notification.id)} 
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">{notification.message}</p>
+                    <div className="mt-2 flex justify-between items-center">
+                      <span className="text-xs text-gray-500">{new Date(notification.date).toLocaleDateString()}</span>
+                      <button 
+                        onClick={() => onAction(notification.action, notification.id)}
+                        className="text-xs text-blue-600 hover:text-blue-800"
+                      >
+                        {notification.action}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Progress Chart Component - Extracted from main component
+interface ProgressChartProps {
+  progressData: typeof treatmentProgress;
+}
+
+const ProgressChart: React.FC<ProgressChartProps> = ({ progressData }) => {
+  // Define metrics to display
+  const metrics = [
+    { key: 'sleepQuality', label: 'Sleep', color: 'bg-blue-400' },
+    { key: 'anxiety', label: 'Anxiety', color: 'bg-red-400', inverted: true },
+    { key: 'focus', label: 'Focus', color: 'bg-green-400' },
+    { key: 'mood', label: 'Mood', color: 'bg-purple-400' },
+    { key: 'energyLevel', label: 'Energy', color: 'bg-yellow-400' }
+  ];
+
+  return (
+    <div className="overflow-x-auto">
+      <div className="min-w-full h-64 bg-gray-50 rounded-lg p-4 flex items-end justify-between space-x-4">
+        {progressData.map((day, dayIndex) => (
+          <div key={dayIndex} className="flex flex-col items-center flex-1">
+            <p className="mb-2 text-xs text-gray-500">
+              {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </p>
+            <div className="w-full flex space-x-1 justify-center">
+              {metrics.map((metric, metricIndex) => (
+                <div 
+                  key={metricIndex}
+                  className={`w-4 ${metric.color} rounded-t relative group`} 
+                  style={{ 
+                    height: `${metric.inverted 
+                      ? (10 - (day as any)[metric.key]) * 10 
+                      : (day as any)[metric.key] * 10}%` 
+                  }}
+                >
+                  {/* Tooltip */}
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-10">
+                    <div className="bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                      {metric.label}: {metric.inverted 
+                        ? `${day[metric.key as keyof typeof day]}/10 (lower is better)` 
+                        : `${day[metric.key as keyof typeof day]}/10`}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <div className="flex justify-center mt-4 text-xs flex-wrap gap-2">
+        {metrics.map((metric, index) => (
+          <div key={index} className="flex items-center mx-1">
+            <div className={`w-3 h-3 ${metric.color} rounded mr-1`}></div>
+            <span>{metric.label}{metric.inverted ? ' (lower is better)' : ''}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // Video Player Component
 interface VideoPlayerProps {
   currentVideo: string;
@@ -305,7 +578,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   return (
     <div className="mb-6">
       {/* Video player */}
-      <div className="mb-4 bg-black rounded-lg overflow-hidden">
+      <div className="mb-4 bg-black rounded-lg overflow-hidden relative">
         <video 
           ref={videoRef}
           className="w-full h-full object-cover"
@@ -313,7 +586,14 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           controls={true}
           autoPlay={isPlaying}
           onEnded={handleVideoEnd}
+          aria-label={`Dr. Miller answering: ${currentVideo}`}
         />
+        {/* Loading indicator */}
+        {isPlaying && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 pointer-events-none">
+            <div className="rounded-full h-16 w-16 border-4 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
+          </div>
+        )}
       </div>
       
       {/* Suggested questions */}
@@ -331,14 +611,308 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           ))}
         </div>
       </div>
+      
+      {/* Custom question form */}
+      <form onSubmit={onCustomQuestionSubmit} className="mt-4">
+        <div className="flex">
+          <input
+            name="customQuestion"
+            type="text"
+            placeholder="Ask your own question..."
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          />
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-4 py-2 rounded-r-md text-sm hover:bg-blue-700 transition-colors"
+          >
+            Ask
+          </button>
+        </div>
+      </form>
     </div>
   );
 };
 
+// Message Bubble Component - For Chat Interface
+interface MessageBubbleProps {
+  message: {
+    role: string;
+    content: string;
+    sources?: { title: string; id: string }[];
+  };
+  index: number;
+  showSourceInfo: Record<string, boolean>;
+  toggleSourceInfo: (index: number) => void;
+}
+
+const MessageBubble: React.FC<MessageBubbleProps> = ({
+  message,
+  index,
+  showSourceInfo,
+  toggleSourceInfo
+}) => {
+  return (
+    <div className="flex animate-fadeIn">
+      <div className={`rounded-full p-2 mr-3 flex-shrink-0 ${
+        message.role === 'user' 
+          ? 'bg-blue-100' 
+          : 'bg-green-100'
+      }`}>
+        {message.role === 'user' ? (
+          <UserCircle className="h-5 w-5 text-blue-600" />
+        ) : (
+          <Brain className="h-5 w-5 text-green-600" />
+        )}
+      </div>
+      <div className={`p-3 rounded-lg shadow-sm text-gray-800 flex-1 ${
+        message.role === 'user'
+          ? 'bg-white'
+          : 'bg-green-50'
+      }`}>
+        <p>{message.content}</p>
+        
+        {message.role === 'assistant' && message.sources && message.sources.length > 0 && (
+          <div className="mt-2">
+            <button 
+              onClick={() => toggleSourceInfo(index)} 
+              className="text-xs flex items-center mt-1 text-blue-600"
+              aria-expanded={showSourceInfo[index] ? 'true' : 'false'}
+            >
+              <Info className="h-3 w-3 mr-1" /> 
+              Sources ({message.sources.length})
+              <ChevronDown className={`h-3 w-3 ml-1 transform ${showSourceInfo[index] ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {showSourceInfo[index] && (
+              <div className="mt-2 text-xs space-y-1 pl-2 border-l-2 border-blue-300">
+                {message.sources.map((source, sourceIdx) => (
+                  <div key={sourceIdx} className="text-gray-600">
+                    {source.title}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Custom hook for speech recognition
+function useSpeechRecognition({
+  onFinalTranscript,
+  onInterimTranscript
+}: {
+  onFinalTranscript: (transcript: string) => void;
+  onInterimTranscript: (transcript: string) => void;
+}) {
+  const recognitionRef = useRef<any>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const finalTranscriptRef = useRef<string>('');
+  
+  // Initialize on client-side only
+  useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
+    // Set up SpeechRecognition
+    const LocalSpeechRecognition = (window as WindowWithSpeechRecognition).SpeechRecognition || 
+                                   (window as WindowWithSpeechRecognition).webkitSpeechRecognition;
+    
+    if (!LocalSpeechRecognition) {
+      setError('Speech recognition not supported in this browser');
+      return;
+    }
+    
+    // Clear all pre-existing recognition references
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
+      recognitionRef.current = null;
+    }
+    
+    // Initialize
+    recognitionRef.current = new LocalSpeechRecognition();
+    recognitionRef.current.continuous = true;
+    recognitionRef.current.interimResults = true;
+    
+    // Handle speech results
+    recognitionRef.current.onresult = (event: any) => {
+      let interimTranscript = '';
+      let finalTranscript = '';
+      
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + ' ';
+          finalTranscriptRef.current += transcript + ' ';
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+      
+      // Active listening mode
+      if (isListening) {
+        // Show combined transcript for user feedback
+        const displayText = finalTranscriptRef.current + interimTranscript;
+        onInterimTranscript(displayText);
+        
+        // When we get a final result, reset silence detection timer
+        if (finalTranscript && typeof window !== 'undefined') {
+          console.log("Final part received:", finalTranscript);
+          
+          // Reset the silence detection timer
+          if (typeof window !== 'undefined') {
+            if (window.silenceTimer) {
+              clearTimeout(window.silenceTimer);
+            }
+            
+            // Set a new silence timer - if no new speech is detected for 2.5 seconds, submit
+            window.silenceTimer = setTimeout(() => {
+              if (isListening && finalTranscriptRef.current.trim()) {
+                console.log("Silence detected after speech, processing:", finalTranscriptRef.current);
+                onFinalTranscript(finalTranscriptRef.current.trim());
+              }
+            }, 2500);
+          } 
+        }
+      }
+    };
+    
+    // Handle errors
+    recognitionRef.current.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      setError(event.error);
+      
+      if (event.error === 'no-speech') {
+        console.log("No speech detected");
+        return; // Don't stop on no-speech errors
+      }
+      
+      if (isListening) {
+        setIsListening(false);
+      }
+    };
+    
+    // Handle when recognition ends
+    recognitionRef.current.onend = () => {
+      console.log("Speech recognition ended");
+      
+      if (isListening) {
+        // If actively listening, restart immediately
+        try {
+          recognitionRef.current.start();
+          console.log("Restarted active listening");
+        } catch (e) {
+          console.error("Error restarting after end:", e);
+          setTimeout(() => {
+            try {
+              recognitionRef.current.start();
+            } catch (e) {
+              console.error("Error in delayed restart:", e);
+              setIsListening(false);
+            }
+          }, 300);
+        }
+      }
+    };
+    
+    // Cleanup on unmount
+    return () => {
+      if (typeof window !== 'undefined' && window.silenceTimer) {
+        clearTimeout(window.silenceTimer);
+      }
+      
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {}
+      }
+    };
+  }, [isListening, onFinalTranscript, onInterimTranscript]);
+  
+  // Start listening
+  const startListening = useCallback(() => {
+    if (typeof window === 'undefined' || !recognitionRef.current) return;
+    
+    // Clear previous transcript and timers
+    finalTranscriptRef.current = '';
+    if (typeof window !== 'undefined' && window.silenceTimer) {
+      clearTimeout(window.silenceTimer);
+    }
+    
+    // Enable active listening
+    setIsListening(true);
+    setError(null);
+    
+    // Attempt to start recognition
+    try {
+      recognitionRef.current.stop(); // Stop any ongoing recognition first
+    } catch (e) {}
+    
+    // Small delay to ensure clean start
+    setTimeout(() => {
+      try {
+        recognitionRef.current.start();
+        console.log("Started active listening");
+      } catch (e) {
+        console.error("Error starting active listening:", e);
+        setIsListening(false);
+        setError('Failed to start listening');
+      }
+    }, 200);
+  }, []);
+  
+  // Stop listening
+  const stopListening = useCallback(() => {
+    // First mark as not listening to prevent auto-restart
+    setIsListening(false);
+    
+    // Check for silenceTimer
+    if (typeof window !== 'undefined' && window.silenceTimer) {
+      clearTimeout(window.silenceTimer);
+    }
+    
+    // Stop recognition
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        console.error("Error stopping active listening:", e);
+      }
+    }
+    
+    // If we have a transcript, process it
+    if (finalTranscriptRef.current.trim()) {
+      onFinalTranscript(finalTranscriptRef.current.trim());
+    }
+    
+    // Reset state
+    finalTranscriptRef.current = '';
+    onInterimTranscript('');
+  }, [onFinalTranscript, onInterimTranscript]);
+  
+  return {
+    isListening,
+    startListening,
+    stopListening,
+    error
+  };
+}
+
+// Main Dashboard Component
 export default function PatientDashboard() {
+  // State
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [chatInput, setChatInput] = useState('');
+  const [filteredProgressMetrics, setFilteredProgressMetrics] = useState<string[]>([
+    'sleepQuality', 'anxiety', 'focus', 'mood', 'energyLevel'
+  ]);
+  
   interface Message {
     role: string;
     content: string;
@@ -365,7 +939,6 @@ export default function PatientDashboard() {
   });
   
   // Voice-related state
-  const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
@@ -377,12 +950,17 @@ export default function PatientDashboard() {
   const [currentVideo, setCurrentVideo] = useState('default');
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+
+  // Notification state
+  const [notifications, setNotifications] = useState(patientNotifications);
+  const [showNotifications, setShowNotifications] = useState(false);
+  
+  // Theme state (new feature)
+  const [darkMode, setDarkMode] = useState(false);
   
   // References
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const recognitionRef = useRef<any>(null);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
-  const finalTranscriptRef = useRef<string>('');
   const wakeWordListeningRef = useRef<boolean>(false);
   
   // Initialize audio player on client side only
@@ -401,8 +979,27 @@ export default function PatientDashboard() {
     };
   }, []);
   
-  // Use SpeechRecognition - moved to useEffect for client-side only
-    const SpeechRecognition: any = null;
+  // Setup speech recognition with custom hook
+  const {
+    isListening,
+    startListening: startListeningBase,
+    stopListening,
+    error: speechError
+  } = useSpeechRecognition({
+    onFinalTranscript: (finalTranscript) => handleSpeechInput(finalTranscript),
+    onInterimTranscript: (interimTranscript) => setTranscript(interimTranscript)
+  });
+  
+  // Enhanced startListening function that handles wake word state
+  const startListening = useCallback(() => {
+    // Disable wake word mode temporarily if active
+    if (wakeWordActive) {
+      wakeWordListeningRef.current = false;
+    }
+    
+    // Start normal listening mode
+    startListeningBase();
+  }, [wakeWordActive, startListeningBase]);
   
   // Function to format transcribed text with OpenAI
   const formatTranscription = useCallback(async (text: string): Promise<string> => {
@@ -451,16 +1048,6 @@ export default function PatientDashboard() {
 
     console.log("Processing final transcript:", finalTranscript);
     
-    // Stop listening
-    setIsListening(false);
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (e) {
-        console.log("Error stopping recognition:", e);
-      }
-    }
-    
     // Format the transcription
     const formattedText = await formatTranscription(finalTranscript);
     console.log("Formatted text:", formattedText);
@@ -472,24 +1059,19 @@ export default function PatientDashboard() {
     setTimeout(() => {
       handleSendMessage(formattedText);
     }, 300);
-    
-    // Reset transcript
-    finalTranscriptRef.current = '';
-    setTranscript('');
-  }, [formatTranscription, setChatInput]);
+  }, [formatTranscription]);
   
   // Handle video question click - only plays the video without sending to chat
-const handleVideoQuestionClick = useCallback((questionKey: 'Will the treatment hurt?' | 'How can I schedule a consultation?' | 'Can I keep doing my regular daily routine while getting treatment?' | 'default') => {
+  const handleVideoQuestionClick = useCallback((questionKey: 'Will the treatment hurt?' | 'How can I schedule a consultation?' | 'Can I keep doing my regular daily routine while getting treatment?' | 'default') => {
     // Just set the video and play it, without sending to the chatbot
     setCurrentVideo(questionKey);
     setIsVideoPlaying(true);
     setShowVideoPlayer(true); // Ensure video player is visible
-}, []);
+  }, []);
   
   // Handle video end
   const handleVideoEnd = useCallback(() => {
     setIsVideoPlaying(false);
-    setShowVideoPlayer(false); // Hide video player when video ends
   }, []);
   
   const handleSendMessage = useCallback(async (overrideText: string | null = null) => {
@@ -589,401 +1171,64 @@ const handleVideoQuestionClick = useCallback((questionKey: 'Will the treatment h
   }, [chatInput, isLoading, audioEnabled]);
   
   // Handle custom question submit from video player
-interface CustomQuestionFormElements extends HTMLFormControlsCollection {
+  interface CustomQuestionFormElements extends HTMLFormControlsCollection {
     customQuestion: HTMLInputElement;
-}
+  }
 
-interface CustomQuestionForm extends HTMLFormElement {
+  interface CustomQuestionForm extends HTMLFormElement {
     elements: CustomQuestionFormElements;
-}
+  }
 
-const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
+  const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget as CustomQuestionForm;
     const customQuestion = form.elements.customQuestion.value;
     
     if (customQuestion.trim()) {
-        // Set as chat input and send
-        setChatInput(customQuestion);
-        handleSendMessage(customQuestion);
-        
-        // Play the default "Finding the answer" video
-        setCurrentVideo('default');
-        setIsVideoPlaying(true);
-        setShowVideoPlayer(true); // Ensure video player is visible
-        
-        // Clear the input field
-        form.elements.customQuestion.value = '';
+      // Set as chat input and send
+      setChatInput(customQuestion);
+      handleSendMessage(customQuestion);
+      
+      // Play the default "Finding the answer" video
+      setCurrentVideo('default');
+      setIsVideoPlaying(true);
+      setShowVideoPlayer(true); // Ensure video player is visible
+      
+      // Clear the input field
+      form.elements.customQuestion.value = '';
     }
-}, [handleSendMessage]);
+  }, [handleSendMessage]);
   
-  // ==== IMPROVED SPEECH RECOGNITION IMPLEMENTATION ====
-  
-  // Initialize on client-side only
-  useEffect(() => {
-    // Only run on client side
-    if (typeof window === 'undefined') return;
-    
-    // Set up SpeechRecognition
-    const LocalSpeechRecognition = (window as WindowWithSpeechRecognition).SpeechRecognition || 
-                                   (window as WindowWithSpeechRecognition).webkitSpeechRecognition;
-    
-    if (!LocalSpeechRecognition) {
-      console.error('Speech recognition not supported in this browser');
-      return;
-    }
-    
-    // Clear all pre-existing recognition references
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (e) {}
-      recognitionRef.current = null;
-    }
-    
-    // Initialize
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognitionRef.current = new SpeechRecognition();
-    recognitionRef.current.continuous = true;
-    recognitionRef.current.interimResults = true;
-    
-    // Handle speech results
-    recognitionRef.current.onresult = (event: any) => {
-      let interimTranscript = '';
-      let finalTranscript = '';
-      
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript + ' ';
-          finalTranscriptRef.current += transcript + ' ';
-        } else {
-          interimTranscript += transcript;
-        }
-      }
-      
-      // Wake word detection mode
-      if (wakeWordActive && !isListening && wakeWordListeningRef.current && typeof window !== 'undefined') {
-        // Use both interim and final for wake word to be more responsive
-        const searchText = (finalTranscriptRef.current + interimTranscript).toLowerCase();
-        const wakeWord = customWakeWord.toLowerCase();
-        
-        console.log("Wake word search:", { searchText, wakeWord });
-        
-        if (searchText.includes(wakeWord)) {
-          console.log("⭐ WAKE WORD DETECTED! ⭐");
-          
-          // Clear detection state
-          wakeWordListeningRef.current = false;
-          window.wakeWordDetected = true;
-          
-          // Clean up any timers
-          clearAllTimers();
-          
-          // Stop recognition to reset it
-          try {
-            recognitionRef.current.stop();
-          } catch (e) {
-            console.error("Error stopping recognition after wake word:", e);
-          }
-          
-          // Schedule starting active listening mode with a slight delay
-          setTimeout(() => {
-            console.log("Activating listening mode after wake word...");
-            finalTranscriptRef.current = '';
-            setTranscript('');
-            window.wakeWordDetected = false;
-            startListening();
-          }, 800);
-          
-          return;
-        }
-      }
-      
-      // Active listening mode
-      if (isListening) {
-        // Show combined transcript for user feedback
-        const displayText = finalTranscriptRef.current + interimTranscript;
-        setTranscript(displayText);
-        
-        // When we get a final result, reset silence detection timer
-        if (finalTranscript && typeof window !== 'undefined') {
-          console.log("Final part received:", finalTranscript);
-          
-          // Reset the silence detection timer
-          if (typeof window !== 'undefined') {
-            if (window.silenceTimer) {
-              clearTimeout(window.silenceTimer);
-            }
-            
-            // Set a new silence timer - if no new speech is detected for 2.5 seconds, submit
-            window.silenceTimer = setTimeout(() => {
-              if (isListening && finalTranscriptRef.current.trim()) {
-                console.log("Silence detected after speech, processing:", finalTranscriptRef.current);
-                handleSpeechInput(finalTranscriptRef.current.trim());
-              }
-            }, 2500);
-          } 
-        }
-      }
-    };
-    
-    // Handle errors
-    recognitionRef.current.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
-      
-      if (event.error === 'no-speech') {
-        console.log("No speech detected");
-        return; // Don't stop on no-speech errors
-      }
-      
-      if (isListening) {
-        setIsListening(false);
-      }
-      
-      if (wakeWordActive) {
-        // Try to restart wake word detection
-        restartWakeWordDetection();
-      }
-    };
-    
-    // Handle when recognition ends
-    recognitionRef.current.onend = () => {
-      console.log("Speech recognition ended");
-      
-      if (isListening) {
-        // If actively listening, restart immediately
-        try {
-          recognitionRef.current.start();
-          console.log("Restarted active listening");
-        } catch (e) {
-          console.error("Error restarting after end:", e);
-          setTimeout(() => {
-            try {
-              recognitionRef.current.start();
-            } catch (e) {
-              console.error("Error in delayed restart:", e);
-            }
-          }, 300);
-        }
-      } else if (wakeWordActive && !window.wakeWordDetected) {
-        // If in wake word mode and not in transition, restart for continuous wake word listening
-        restartWakeWordDetection();
-      }
-    };
-    
-    // Cleanup on unmount
-    return () => {
-      clearAllTimers();
-      
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch (e) {}
-      }
-      
-      if (audioPlayerRef.current) {
-        audioPlayerRef.current.pause();
-        try {
-          audioPlayerRef.current.currentTime = 0;
-        } catch (e) {}
-      }
-    };
-  }, []);
-  
-  // Helper to restart wake word detection with error handling
-  const restartWakeWordDetection = useCallback(() => {
-    if (typeof window === 'undefined') return;
-    if (!wakeWordActive || window.wakeWordDetected || !recognitionRef.current) return;
-    
-    // Immediate delay to allow browser to release resources
-    if (window.restartTimer) {
-      clearTimeout(window.restartTimer);
-    }
-    
-    window.restartTimer = setTimeout(() => {
-      try {
-        wakeWordListeningRef.current = true;
-        finalTranscriptRef.current = '';
-        recognitionRef.current.start();
-        console.log("Restarted wake word detection");
-      } catch (e) {
-        console.error("Error restarting wake word:", e);
-        
-        // Try again after a longer delay
-        setTimeout(() => {
-          try {
-            recognitionRef.current.start();
-            console.log("Restarted wake word after delay");
-          } catch (e) {
-            console.error("Failed to restart wake word detection after multiple attempts");
-            // Reset wake word state after repeated failures
-            wakeWordListeningRef.current = false;
-          }
-        }, 1000);
-      }
-    }, 300);
-  }, [wakeWordActive]);
-  
-  // Effect to manage wake word activation/deactivation
+  // Wake Word Detection (simplified implementation for this mockup)
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
     console.log(`Wake word mode ${wakeWordActive ? 'enabled' : 'disabled'}`);
     
     if (wakeWordActive) {
-      // Enable wake word detection mode
-      window.wakeWordDetected = false;
-      finalTranscriptRef.current = '';
-      setTranscript('');
-      
-      // If currently in active listening, stop that first
-      if (isListening) {
-        setIsListening(false);
-        try {
-          if (recognitionRef.current) {
-            recognitionRef.current.stop();
-          }
-        } catch (e) {}
-        
-        // Add a delay before starting wake word to ensure clean transition
-        setTimeout(() => {
-          wakeWordListeningRef.current = true;
-          try {
-            recognitionRef.current.start();
-            console.log("Started wake word detection after stopping active listening");
-          } catch (e) {
-            console.error("Error starting wake word detection:", e);
-            restartWakeWordDetection();
-          }
-        }, 500);
-      } else {
-        // Start wake word detection directly
-        wakeWordListeningRef.current = true;
-        try {
-          recognitionRef.current.start();
-          console.log("Started wake word detection");
-        } catch (e) {
-          console.error("Error starting wake word detection:", e);
-          restartWakeWordDetection();
-        }
-      }
+      // In a real implementation, we would activate wake word detection here
+      wakeWordListeningRef.current = true;
+      console.log("Wake word detection activated with phrase:", customWakeWord);
     } else {
-      // Disable wake word detection (if not in active listening mode)
+      // Disable wake word detection
       wakeWordListeningRef.current = false;
-      if (!isListening && recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-          console.log("Stopped wake word detection");
-        } catch (e) {
-          console.error("Error stopping wake word detection:", e);
-        }
-      }
+      console.log("Wake word detection deactivated");
     }
-    
-    // Cleanup
-    return () => {
-      if (window.restartTimer) {
-        clearTimeout(window.restartTimer);
-      }
-    };
-  }, [wakeWordActive, isListening, restartWakeWordDetection]);
+  }, [wakeWordActive, customWakeWord]);
   
-  // Clear all timers to prevent memory leaks
-  const clearAllTimers = useCallback(() => {
-    if (typeof window === 'undefined') return;
-    
-    if (window.autoSendTimeout) {
-      clearTimeout(window.autoSendTimeout);
-      window.autoSendTimeout = undefined;
+  // Dark mode toggle
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
-    
-    if (window.silenceTimer) {
-      clearTimeout(window.silenceTimer);
-      window.silenceTimer = undefined;
-    }
-    
-    if (window.restartTimer) {
-      clearTimeout(window.restartTimer);
-      window.restartTimer = undefined;
-    }
-  }, []);
+  }, [darkMode]);
   
   // Auto-scroll to bottom when chat updates
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-  
-  // Toggle listen mode
-  const startListening = useCallback(() => {
-    if (typeof window === 'undefined' || !recognitionRef.current) return;
-    
-    // Disable wake word mode temporarily if active
-    if (wakeWordActive) {
-      wakeWordListeningRef.current = false;
-    }
-    
-    // Clear previous transcript and timers
-    setTranscript('');
-    finalTranscriptRef.current = '';
-    clearAllTimers();
-    
-    // Enable active listening
-    setIsListening(true);
-    
-    // Attempt to start recognition
-    try {
-      recognitionRef.current.stop(); // Stop any ongoing recognition first
-    } catch (e) {}
-    
-    // Small delay to ensure clean start
-    setTimeout(() => {
-      try {
-        recognitionRef.current.start();
-        console.log("Started active listening");
-      } catch (e) {
-        console.error("Error starting active listening:", e);
-        setIsListening(false);
-      }
-    }, 200);
-  }, [wakeWordActive, clearAllTimers]);
-  
-  // Stop listening and process transcript
-  const stopListening = useCallback(() => {
-    // First mark as not listening to prevent auto-restart
-    setIsListening(false);
-    
-    // Check for silenceTimer
-    if (typeof window !== 'undefined' && window.silenceTimer) {
-      clearTimeout(window.silenceTimer);
-    }
-    
-    // Stop recognition
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (e) {
-        console.error("Error stopping active listening:", e);
-      }
-    }
-    
-    // If we have a transcript, process it
-    if (finalTranscriptRef.current.trim()) {
-      handleSpeechInput(finalTranscriptRef.current.trim());
-    } else {
-      // Reset state
-      finalTranscriptRef.current = '';
-      setTranscript('');
-      
-      // If wake word was active, restart it
-      if (wakeWordActive) {
-        setTimeout(() => {
-          wakeWordListeningRef.current = true;
-          restartWakeWordDetection();
-        }, 500);
-      }
-    }
-  }, [handleSpeechInput, wakeWordActive, restartWakeWordDetection]);
   
   // Text-to-speech using ElevenLabs
   const speakText = async (text: string) => {
@@ -1090,34 +1335,85 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
     }));
   };
 
-  // Toggle video player visibility - removed as we're handling this inline now
+  // Notification handlers
+  const handleDismissNotification = (id: number) => {
+    setNotifications(prev => prev.filter(notification => notification.id !== id));
+  };
+  
+  const handleNotificationAction = (action: string, id: number) => {
+    // Mark as read
+    setNotifications(prev => prev.map(notification => 
+      notification.id === id ? { ...notification, read: true } : notification
+    ));
+    
+    // Handle specific actions based on the action text
+    switch (action) {
+      case 'View Appointment':
+        setActiveTab('appointments');
+        break;
+      case 'Read Message':
+        setActiveTab('chat');
+        break;
+      case 'View Resource':
+        setActiveTab('resources');
+        break;
+      case 'Complete Report':
+        // Would navigate to progress tracking form
+        setActiveTab('dashboard');
+        break;
+      default:
+        break;
+    }
+    
+    // Hide notification panel after action
+    setShowNotifications(false);
+  };
+  
+  const markAllNotificationsAsRead = () => {
+    setNotifications(prev => prev.map(notification => ({ ...notification, read: true })));
+  };
+
+  // Filter progress metrics
+  const toggleProgressMetric = (metric: string) => {
+    setFilteredProgressMetrics(prev => 
+      prev.includes(metric) 
+        ? prev.filter(m => m !== metric) 
+        : [...prev, metric]
+    );
+  };
+
+  // Calculate unread notifications count
+  const unreadNotificationsCount = useMemo(() => {
+    return notifications.filter(notification => !notification.read).length;
+  }, [notifications]);
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className={`flex h-screen ${darkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
       {/* Sidebar */}
-      <div className={`bg-white border-r border-gray-200 ${isSidebarOpen ? 'w-64' : 'w-20'} transition-all duration-300 flex flex-col`}>
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+      <div className={`${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'} border-r ${isSidebarOpen ? 'w-64' : 'w-20'} transition-all duration-300 flex flex-col`}>
+        <div className={`p-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} flex items-center justify-between`}>
           <div className="flex items-center">
-            <Brain className="text-blue-600 h-8 w-8" />
-            {isSidebarOpen && <span className="ml-2 font-bold text-gray-800">Brain Center</span>}
+            <Brain className={`${darkMode ? 'text-blue-400' : 'text-blue-600'} h-8 w-8`} />
+            {isSidebarOpen && <span className={`ml-2 font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Brain Center</span>}
           </div>
           <button 
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="text-gray-500 hover:text-gray-800"
+            className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-500 hover:text-gray-800'}`}
+            aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
           >
             <ChevronRight className={`h-5 w-5 transform ${isSidebarOpen ? 'rotate-180' : ''}`} />
           </button>
         </div>
         
-        <div className="py-4 px-4 border-b border-gray-200">
+        <div className={`py-4 px-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
           <div className="flex items-center">
             <div className="bg-blue-100 rounded-full p-2">
               <UserCircle className="h-6 w-6 text-blue-600" />
             </div>
             {isSidebarOpen && (
               <div className="ml-2">
-                <p className="text-sm font-medium text-gray-800">{patientProfile.name}</p>
-                <p className="text-xs text-gray-500">{patientProfile.condition}</p>
+                <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>{patientProfile.name}</p>
+                <p className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>{patientProfile.condition}</p>
               </div>
             )}
           </div>
@@ -1128,7 +1424,12 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
             <li>
               <button 
                 onClick={() => setActiveTab('dashboard')}
-                className={`flex items-center w-full px-4 py-3 ${activeTab === 'dashboard' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100'}`}
+                className={`flex items-center w-full px-4 py-3 ${
+                  activeTab === 'dashboard' 
+                    ? (darkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-50 text-blue-600') 
+                    : (darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100')
+                }`}
+                aria-current={activeTab === 'dashboard' ? 'page' : undefined}
               >
                 <Activity className="h-5 w-5" />
                 {isSidebarOpen && <span className="ml-3">My Progress</span>}
@@ -1137,7 +1438,12 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
             <li>
               <button 
                 onClick={() => setActiveTab('appointments')}
-                className={`flex items-center w-full px-4 py-3 ${activeTab === 'appointments' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100'}`}
+                className={`flex items-center w-full px-4 py-3 ${
+                  activeTab === 'appointments' 
+                    ? (darkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-50 text-blue-600') 
+                    : (darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100')
+                }`}
+                aria-current={activeTab === 'appointments' ? 'page' : undefined}
               >
                 <Calendar className="h-5 w-5" />
                 {isSidebarOpen && <span className="ml-3">Appointments</span>}
@@ -1146,7 +1452,12 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
             <li>
               <button 
                 onClick={() => setActiveTab('resources')}
-                className={`flex items-center w-full px-4 py-3 ${activeTab === 'resources' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100'}`}
+                className={`flex items-center w-full px-4 py-3 ${
+                  activeTab === 'resources' 
+                    ? (darkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-50 text-blue-600') 
+                    : (darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100')
+                }`}
+                aria-current={activeTab === 'resources' ? 'page' : undefined}
               >
                 <FileText className="h-5 w-5" />
                 {isSidebarOpen && <span className="ml-3">Resources</span>}
@@ -1155,7 +1466,12 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
             <li>
               <button 
                 onClick={() => setActiveTab('chat')}
-                className={`flex items-center w-full px-4 py-3 ${activeTab === 'chat' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100'}`}
+                className={`flex items-center w-full px-4 py-3 ${
+                  activeTab === 'chat' 
+                    ? (darkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-50 text-blue-600') 
+                    : (darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100')
+                }`}
+                aria-current={activeTab === 'chat' ? 'page' : undefined}
               >
                 <MessageSquare className="h-5 w-5" />
                 {isSidebarOpen && <span className="ml-3">Ask Dr. Miller</span>}
@@ -1164,12 +1480,23 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
           </ul>
         </nav>
         
-        <div className="p-4 border-t border-gray-200">
-          <button className="flex items-center w-full px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md">
+        <div className={`p-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          <button 
+            onClick={() => setDarkMode(!darkMode)}
+            className={`flex items-center w-full px-4 py-2 ${darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'} rounded-md mb-2`}
+            aria-pressed={darkMode}
+          >
+            {darkMode ? (
+              <><Sun className="h-5 w-5" />{isSidebarOpen && <span className="ml-3">Light Mode</span>}</>
+            ) : (
+              <><Coffee className="h-5 w-5" />{isSidebarOpen && <span className="ml-3">Dark Mode</span>}</>
+            )}
+          </button>
+          <button className={`flex items-center w-full px-4 py-2 ${darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'} rounded-md mb-2`}>
             <Settings className="h-5 w-5" />
             {isSidebarOpen && <span className="ml-3">Settings</span>}
           </button>
-          <button className="flex items-center w-full px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md mt-2">
+          <button className={`flex items-center w-full px-4 py-2 ${darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'} rounded-md mt-2`}>
             <LogOut className="h-5 w-5" />
             {isSidebarOpen && <span className="ml-3">Sign Out</span>}
           </button>
@@ -1177,17 +1504,49 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
       </div>
       
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className={`flex-1 flex flex-col overflow-hidden ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50'}`}>
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-gray-800">
+        <header className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b p-4 flex items-center justify-between`}>
+          <h1 className={`text-2xl font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
             {activeTab === 'dashboard' && 'My Treatment Progress'}
             {activeTab === 'appointments' && 'My Appointments'}
             {activeTab === 'resources' && 'Treatment Resources'}
             {activeTab === 'chat' && 'Ask Dr. Miller'}
           </h1>
           <div className="flex items-center space-x-4">
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm">
+            {/* Notification Bell */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className={`relative p-2 rounded-full ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                aria-label="Notifications"
+              >
+                <Bell className={`h-5 w-5 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+                {unreadNotificationsCount > 0 && (
+                  <span className="absolute top-0 right-0 inline-block w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                    {unreadNotificationsCount}
+                  </span>
+                )}
+              </button>
+              
+              {/* Notification Panel */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 z-50">
+                  <NotificationPanel 
+                    notifications={notifications}
+                    onDismiss={handleDismissNotification}
+                    onAction={handleNotificationAction}
+                    onMarkAllRead={markAllNotificationsAsRead}
+                  />
+                </div>
+              )}
+            </div>
+            
+            <button className={`px-4 py-2 ${
+              darkMode 
+                ? 'bg-blue-700 text-white hover:bg-blue-600' 
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            } rounded-md text-sm transition-colors`}>
               Contact Support
             </button>
           </div>
@@ -1200,8 +1559,13 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
             {/* Wake Word Toggle */}
             <button 
               onClick={toggleWakeWord}
-              className={`p-3 rounded-full shadow-lg ${wakeWordActive ? 'bg-green-600 text-white' : 'bg-white text-gray-700'}`}
+              className={`p-3 rounded-full shadow-lg ${
+                wakeWordActive 
+                  ? 'bg-green-600 text-white' 
+                  : (darkMode ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-700')
+              }`}
               title={wakeWordActive ? "Wake word active" : "Enable wake word"}
+              aria-pressed={wakeWordActive}
             >
               <Zap className="h-5 w-5" />
             </button>
@@ -1209,8 +1573,11 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
             {/* Audio Toggle */}
             <button 
               onClick={toggleAudio}
-              className="p-3 bg-white rounded-full shadow-lg"
+              className={`p-3 rounded-full shadow-lg ${
+                darkMode ? 'bg-gray-700 text-gray-300' : 'bg-white text-gray-700'
+              }`}
               title={audioEnabled ? "Mute assistant" : "Unmute assistant"}
+              aria-pressed={audioEnabled}
             >
               {audioEnabled ? (
                 <Volume2 className="h-5 w-5 text-blue-600" />
@@ -1222,7 +1589,13 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
             {/* Speech Recognition */}
             <button 
               onClick={isListening ? stopListening : startListening}
-              className={`p-4 rounded-full shadow-lg ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-blue-600 text-white'}`}
+              className={`p-4 rounded-full shadow-lg ${
+                isListening 
+                  ? 'bg-red-500 text-white animate-pulse' 
+                  : (darkMode ? 'bg-blue-700' : 'bg-blue-600') + ' text-white'
+              }`}
+              aria-pressed={isListening}
+              aria-label={isListening ? "Stop listening" : "Start voice input"}
             >
               {isListening ? (
                 <MicOff className="h-6 w-6" />
@@ -1234,25 +1607,35 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
           
           {/* Wake Word Settings */}
           {showWakeWordSettings && (
-            <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200 w-80">
-              <h3 className="text-sm font-medium text-gray-800 mb-3">Set Custom Wake Word</h3>
+            <div className={`${
+              darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'
+            } p-4 rounded-lg shadow-lg border w-80`}>
+              <h3 className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-800'} mb-3`}>Set Custom Wake Word</h3>
               <input
                 type="text"
                 value={customWakeWord}
                 onChange={(e) => setCustomWakeWord(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+                className={`w-full px-3 py-2 border ${
+                  darkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-800'
+                } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3`}
                 placeholder="e.g., Hey Dr. Miller"
               />
               <div className="flex justify-end">
                 <button 
                   onClick={() => setShowWakeWordSettings(false)}
-                  className="px-3 py-1 text-gray-600 hover:text-gray-800 text-sm mr-2"
+                  className={`px-3 py-1 ${
+                    darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-800'
+                  } text-sm mr-2`}
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={saveWakeWord}
-                  className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm"
+                  className={`px-3 py-1 ${
+                    darkMode ? 'bg-blue-700 hover:bg-blue-600' : 'bg-blue-600 hover:bg-blue-700'
+                  } text-white rounded-md text-sm`}
                 >
                   Save
                 </button>
@@ -1271,21 +1654,27 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
         
         {/* Listening Indicator */}
         {isListening && (
-          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 bg-white px-4 py-2 rounded-lg shadow-lg border border-gray-200 flex items-center">
+          <div className={`fixed top-20 left-1/2 transform -translate-x-1/2 z-40 ${
+            darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+          } px-4 py-2 rounded-lg shadow-lg border flex items-center`}>
             <div className="flex space-x-1 mr-3">
               <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
               <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
               <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
             </div>
-            <span className="text-sm font-medium">Listening... <span className="text-gray-500">{transcript}</span></span>
+            <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+              Listening... <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>{transcript}</span>
+            </span>
           </div>
         )}
         
         {/* Show Wake Word Active Status */}
         {wakeWordActive && !isListening && wakeWordListeningRef.current && (
-          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 bg-white px-4 py-2 rounded-lg shadow-lg border border-gray-200 flex items-center">
+          <div className={`fixed top-20 left-1/2 transform -translate-x-1/2 z-40 ${
+            darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+          } px-4 py-2 rounded-lg shadow-lg border flex items-center`}>
             <Zap className="h-4 w-4 text-green-600 mr-2" />
-            <span className="text-sm font-medium">
+            <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
               Say &quot;{customWakeWord}&quot; to activate
               <button 
                 onClick={() => setShowWakeWordSettings(true)}
@@ -1297,30 +1686,49 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
           </div>
         )}
         
+        {/* Speech Recognition Error */}
+        {speechError && (
+          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 bg-red-100 border border-red-300 px-4 py-2 rounded-lg shadow-lg text-red-700 flex items-center">
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            <span className="text-sm">
+              {speechError === 'not-allowed' 
+                ? 'Microphone access denied. Please check your browser permissions.' 
+                : `Speech recognition error: ${speechError}`}
+            </span>
+          </div>
+        )}
+        
         {/* Content Area */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className={`flex-1 overflow-y-auto p-6 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
           {/* Progress Dashboard View */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
               {/* Treatment Overview */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">Treatment Overview</h2>
+              <div className={`${
+                darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+              } rounded-lg shadow-sm border p-6`}>
+                <h2 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Treatment Overview</h2>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Treatment Plan</p>
-                    <p className="text-lg font-medium text-gray-800">{patientProfile.treatmentPlan}</p>
+                  <div className={`${darkMode ? 'bg-blue-900' : 'bg-blue-50'} p-4 rounded-lg`}>
+                    <p className={`text-sm ${darkMode ? 'text-blue-300' : 'text-gray-600'}`}>Treatment Plan</p>
+                    <p className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>{patientProfile.treatmentPlan}</p>
                   </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Start Date</p>
-                    <p className="text-lg font-medium text-gray-800">{new Date(patientProfile.treatmentStart).toLocaleDateString()}</p>
+                  <div className={`${darkMode ? 'bg-green-900' : 'bg-green-50'} p-4 rounded-lg`}>
+                    <p className={`text-sm ${darkMode ? 'text-green-300' : 'text-gray-600'}`}>Progress</p>
+                    <p className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                      {patientProfile.completedSessions} of {patientProfile.totalPlannedSessions} Sessions
+                    </p>
+                    <div className="w-full bg-gray-300 rounded-full h-2.5 mt-2">
+                      <div className="bg-green-600 h-2.5 rounded-full" style={{ width: `${(patientProfile.completedSessions / patientProfile.totalPlannedSessions) * 100}%` }}></div>
+                    </div>
                   </div>
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Sessions Completed</p>
-                    <p className="text-lg font-medium text-gray-800">8 of 24</p>
+                  <div className={`${darkMode ? 'bg-purple-900' : 'bg-purple-50'} p-4 rounded-lg`}>
+                    <p className={`text-sm ${darkMode ? 'text-purple-300' : 'text-gray-600'}`}>Start Date</p>
+                    <p className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>{new Date(patientProfile.treatmentStart).toLocaleDateString()}</p>
                   </div>
-                  <div className="bg-yellow-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Next Appointment</p>
-                    <p className="text-lg font-medium text-gray-800">
+                  <div className={`${darkMode ? 'bg-yellow-900' : 'bg-yellow-50'} p-4 rounded-lg`}>
+                    <p className={`text-sm ${darkMode ? 'text-yellow-300' : 'text-gray-600'}`}>Next Appointment</p>
+                    <p className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                       {patientAppointments[0].date.split('-')[2]} {new Date(patientAppointments[0].date).toLocaleString('default', { month: 'short' })} at {patientAppointments[0].time}
                     </p>
                   </div>
@@ -1328,77 +1736,162 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
               </div>
               
               {/* Progress Chart */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">My Progress Tracker</h2>
-                <div className="overflow-x-auto">
-                  <div className="min-w-full h-64 bg-gray-50 rounded-lg p-4 flex items-end justify-between space-x-4">
-                    {treatmentProgress.map((day, index) => (
-                      <div key={index} className="flex flex-col items-center flex-1">
-                        <p className="mb-2 text-xs text-gray-500">{new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
-                        <div className="w-full flex space-x-1 justify-center">
-                          <div className="w-4 bg-blue-400 rounded-t" style={{ height: `${day.sleepQuality * 10}%` }} title={`Sleep: ${day.sleepQuality}/10`}></div>
-                          <div className="w-4 bg-red-400 rounded-t" style={{ height: `${(10 - day.anxiety) * 10}%` }} title={`Anxiety: ${day.anxiety}/10 (lower is better)`}></div>
-                          <div className="w-4 bg-green-400 rounded-t" style={{ height: `${day.focus * 10}%` }} title={`Focus: ${day.focus}/10`}></div>
-                          <div className="w-4 bg-purple-400 rounded-t" style={{ height: `${day.mood * 10}%` }} title={`Mood: ${day.mood}/10`}></div>
-                        </div>
-                      </div>
-                    ))}
+              <div className={`${
+                darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+              } rounded-lg shadow-sm border p-6`}>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>My Progress Tracker</h2>
+                  
+                  {/* Metric filter buttons */}
+                  <div className="flex flex-wrap gap-2">
+                    <button 
+                      onClick={() => toggleProgressMetric('sleepQuality')}
+                      className={`px-2 py-1 text-xs rounded-full ${
+                        filteredProgressMetrics.includes('sleepQuality')
+                          ? 'bg-blue-600 text-white'
+                          : darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                      }`}
+                    >
+                      Sleep
+                    </button>
+                    <button 
+                      onClick={() => toggleProgressMetric('anxiety')}
+                      className={`px-2 py-1 text-xs rounded-full ${
+                        filteredProgressMetrics.includes('anxiety')
+                          ? 'bg-red-600 text-white'
+                          : darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                      }`}
+                    >
+                      Anxiety
+                    </button>
+                    <button 
+                      onClick={() => toggleProgressMetric('focus')}
+                      className={`px-2 py-1 text-xs rounded-full ${
+                        filteredProgressMetrics.includes('focus')
+                          ? 'bg-green-600 text-white'
+                          : darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                      }`}
+                    >
+                      Focus
+                    </button>
+                    <button 
+                      onClick={() => toggleProgressMetric('mood')}
+                      className={`px-2 py-1 text-xs rounded-full ${
+                        filteredProgressMetrics.includes('mood')
+                          ? 'bg-purple-600 text-white'
+                          : darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                      }`}
+                    >
+                      Mood
+                    </button>
+                    <button 
+                      onClick={() => toggleProgressMetric('energyLevel')}
+                      className={`px-2 py-1 text-xs rounded-full ${
+                        filteredProgressMetrics.includes('energyLevel')
+                          ? 'bg-yellow-600 text-white'
+                          : darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                      }`}
+                    >
+                      Energy
+                    </button>
                   </div>
                 </div>
-                <div className="flex justify-center mt-4 text-xs">
-                  <div className="flex items-center mx-2">
-                    <div className="w-3 h-3 bg-blue-400 rounded mr-1"></div>
-                    <span>Sleep</span>
-                  </div>
-                  <div className="flex items-center mx-2">
-                    <div className="w-3 h-3 bg-red-400 rounded mr-1"></div>
-                    <span>Anxiety</span>
-                  </div>
-                  <div className="flex items-center mx-2">
-                    <div className="w-3 h-3 bg-green-400 rounded mr-1"></div>
-                    <span>Focus</span>
-                  </div>
-                  <div className="flex items-center mx-2">
-                    <div className="w-3 h-3 bg-purple-400 rounded mr-1"></div>
-                    <span>Mood</span>
-                  </div>
-                </div>
+                
+                {/* Progress chart component */}
+                <ProgressChart progressData={treatmentProgress} />
+                
                 <div className="mt-4 flex justify-center">
-                  <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm">
+                  <button className={`${
+                    darkMode ? 'bg-blue-700 hover:bg-blue-600' : 'bg-blue-600 hover:bg-blue-700'
+                  } text-white px-4 py-2 rounded-md text-sm transition-colors`}>
                     Log Today&apos;s Progress
                   </button>
                 </div>
               </div>
               
               {/* Treatment Notes */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">Treatment Notes</h2>
+              <div className={`${
+                darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+              } rounded-lg shadow-sm border p-6`}>
+                <h2 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Treatment Notes</h2>
                 <div className="space-y-4">
                   {treatmentProgress.map((day, index) => (
-                    <div key={index} className="border-l-4 border-blue-400 pl-4 py-2">
+                    <div key={index} className={`border-l-4 border-blue-400 pl-4 py-2 ${
+                      darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                    } transition-colors`}>
                       <div className="flex justify-between items-start">
-                        <p className="text-sm font-medium text-gray-800">{new Date(day.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
-                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Session {index + 1}</span>
+                        <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                          {new Date(day.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                        </p>
+                        <span className={`${
+                          darkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'
+                        } text-xs px-2 py-1 rounded`}>
+                          Session {index + 1}
+                        </span>
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">{day.notes}</p>
+                      <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'} mt-1`}>{day.notes}</p>
+                      
+                      {/* Additional metrics section */}
+                      <div className="mt-2 grid grid-cols-3 gap-2">
+                        <div className={`${
+                          darkMode ? 'bg-gray-700' : 'bg-gray-100'
+                        } rounded p-1 text-xs flex items-center justify-between`}>
+                          <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>Sleep:</span>
+                          <span className={`font-medium ${
+                            day.sleepQuality >= 7 
+                              ? 'text-green-500' 
+                              : day.sleepQuality >= 5 
+                                ? 'text-yellow-500' 
+                                : 'text-red-500'
+                          }`}>{day.sleepQuality}/10</span>
+                        </div>
+                        <div className={`${
+                          darkMode ? 'bg-gray-700' : 'bg-gray-100'
+                        } rounded p-1 text-xs flex items-center justify-between`}>
+                          <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>Anxiety:</span>
+                          <span className={`font-medium ${
+                            day.anxiety <= 3 
+                              ? 'text-green-500' 
+                              : day.anxiety <= 6 
+                                ? 'text-yellow-500' 
+                                : 'text-red-500'
+                          }`}>{day.anxiety}/10</span>
+                        </div>
+                        <div className={`${
+                          darkMode ? 'bg-gray-700' : 'bg-gray-100'
+                        } rounded p-1 text-xs flex items-center justify-between`}>
+                          <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>Focus:</span>
+                          <span className={`font-medium ${
+                            day.focus >= 7 
+                              ? 'text-green-500' 
+                              : day.focus >= 5 
+                                ? 'text-yellow-500' 
+                                : 'text-red-500'
+                          }`}>{day.focus}/10</span>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
               
               {/* Quick AI Assistant for Dashboard */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className={`${
+                darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+              } rounded-lg shadow-sm border p-6`}>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-800">Ask Dr. Miller</h2>
+                  <h2 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Ask Dr. Miller</h2>
                   <button 
                     onClick={() => setActiveTab('chat')}
-                    className="text-blue-600 text-sm hover:text-blue-800 flex items-center"
+                    className={`${
+                      darkMode ? 'text-blue-400' : 'text-blue-600'
+                    } text-sm hover:underline flex items-center`}
                   >
                     Full Chat <ChevronRight className="h-4 w-4 ml-1" />
                   </button>
                 </div>
-                <div className="border border-gray-300 rounded-md">
-                  <div className="p-4 max-h-48 overflow-y-auto bg-gray-50">
+                <div className={`border ${darkMode ? 'border-gray-700' : 'border-gray-300'} rounded-md`}>
+                  <div className={`p-4 max-h-48 overflow-y-auto ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                     {/* Just show the last message exchange for the mini view */}
                     {messages.length > 0 && (
                       <>
@@ -1406,8 +1899,14 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
                           <div className="bg-blue-100 rounded-full p-2 mr-3 flex-shrink-0">
                             <UserCircle className="h-5 w-5 text-blue-600" />
                           </div>
-                          <div className="bg-white p-3 rounded-lg shadow-sm text-gray-800 text-sm flex-1">
-                            {messages[messages.length - 2]?.role === 'user' ? messages[messages.length - 2].content : "Ask me about your treatment or how you're feeling today!"}
+                          <div className={`${
+                            darkMode ? 'bg-gray-800' : 'bg-white'
+                          } p-3 rounded-lg shadow-sm ${
+                            darkMode ? 'text-white' : 'text-gray-800'
+                          } text-sm flex-1`}>
+                            {messages[messages.length - 2]?.role === 'user' 
+                              ? messages[messages.length - 2].content 
+                              : "Ask me about your treatment or how you're feeling today!"}
                           </div>
                         </div>
                         {messages[messages.length - 1]?.role === 'assistant' && (
@@ -1415,7 +1914,11 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
                             <div className="bg-green-100 rounded-full p-2 mr-3 flex-shrink-0">
                               <Brain className="h-5 w-5 text-green-600" />
                             </div>
-                            <div className="bg-green-50 p-3 rounded-lg shadow-sm text-gray-800 text-sm flex-1">
+                            <div className={`${
+                              darkMode ? 'bg-green-900' : 'bg-green-50'
+                            } p-3 rounded-lg shadow-sm ${
+                              darkMode ? 'text-white' : 'text-gray-800'
+                            } text-sm flex-1`}>
                               {messages[messages.length - 1].content}
                             </div>
                           </div>
@@ -1423,45 +1926,31 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
                       </>
                     )}
                   </div>
-                  <div className="border-t border-gray-300 p-3 flex">
+                  <div className={`border-t ${darkMode ? 'border-gray-700' : 'border-gray-300'} p-3 flex`}>
                     <input
                       type="text"
                       placeholder="Ask about your treatment or progress..."
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      className="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-gray-800 placeholder-gray-400 text-sm"
+                        className={`${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'} flex-1 px-3 py-2 rounded-l-md focus:outline-none`}
                     />
                     <button 
                       onClick={() => handleSendMessage()}
-                      disabled={!chatInput.trim() || isLoading}
-                      className={`p-2 rounded-full ${
-                        !chatInput.trim() || isLoading ? 'text-gray-400' : 'text-blue-600 hover:bg-blue-50'
-                      }`}
+                      className={`${
+                        darkMode ? 'bg-blue-700 text-white' : 'bg-blue-600 text-white'
+                      } px-4 py-2 rounded-r-md text-sm`}
                     >
-                      <Send className="h-5 w-5" />
+                        Send
                     </button>
-                  </div>
-                </div>
-                <div className="mt-3 flex justify-between items-center">
-                  <div className="text-xs text-gray-500 flex items-center">
-                    <Info className="h-3 w-3 mr-1" /> Dr. Miller is here to help with your treatment journey
-                  </div>
-                  <div className="flex space-x-2">
-                    <button 
-                      onClick={startListening}
-                      className="px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs flex items-center hover:bg-blue-100"
-                    >
-                      <Mic className="h-3 w-3 mr-1" /> Voice Input
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Appointments View */}
-          {activeTab === 'appointments' && (
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    )}
+                    
+                    {/* Appointments View */}
+           {activeTab === 'appointments' && (
             <div className="space-y-6">
               {/* Upcoming Appointments */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -1889,5 +2378,5 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
         </main>
       </div>
     </div>
-  );
-}
+    );
+    }

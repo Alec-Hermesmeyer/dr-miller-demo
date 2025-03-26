@@ -28,13 +28,13 @@ export default function LandingPage() {
               <a href="#" className="text-blue-700 font-medium">Home</a>
               <a href="#" className="text-gray-600 hover:text-blue-700">About</a>
               <a href="#" className="text-gray-600 hover:text-blue-700">Treatments</a>
-              <a href="#" className="text-gray-600 hover:text-blue-700">Ask Dr. Miller</a>
+              <Link href="/dashboard" className="text-gray-600 hover:text-blue-700">Ask Dr. Miller</Link>
               <a href="#" className="text-gray-600 hover:text-blue-700">Contact</a>
             </nav>
             
             <div className="hidden md:flex items-center space-x-4">
               <Link href="/dashboard" className="px-4 py-2 text-blue-700 hover:text-blue-800">Dashboard</Link>
-              <a href="#" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Register</a>
+              <Link href="/register" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Register</Link>
             </div>
             
             {/* Mobile menu button */}
@@ -79,9 +79,9 @@ export default function LandingPage() {
                 <a href="#" className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-center">
                   Schedule a Consultation
                 </a>
-                <a href="#" className="px-6 py-3 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 text-center">
+                <Link href="/dashboard" className="px-6 py-3 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 text-center">
                   Ask Dr. Miller
-                </a>
+                </Link>
               </div>
             </div>
             
