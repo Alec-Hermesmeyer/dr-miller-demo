@@ -308,7 +308,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       <div className="mb-4 bg-black rounded-lg overflow-hidden">
         <video 
           ref={videoRef}
-          className="w-full h-64 object-cover"
+          className="w-full h-full object-cover"
           src={videos[currentVideo as keyof typeof videos]}
           controls={true}
           autoPlay={isPlaying}
