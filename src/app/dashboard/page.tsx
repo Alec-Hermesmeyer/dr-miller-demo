@@ -248,6 +248,83 @@ declare global {
   }
 }
 
+// Video Player Component
+interface VideoPlayerProps {
+  currentVideo: string;
+  isPlaying: boolean;
+  onVideoEnd: () => void;
+  onQuestionClick: (questionKey: string) => void;
+  onCustomQuestionSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+}
+
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
+  currentVideo, 
+  isPlaying, 
+  onVideoEnd, 
+  onQuestionClick,
+  onCustomQuestionSubmit,
+}) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  
+  // Video mapping
+  const videos: Record<'Will the treatment hurt?' | 'How can I schedule a consultation?' | 'Can I keep doing my regular daily routine while getting treatment?' | 'default', string> = {
+    'Will the treatment hurt?': 'Will the treatment hurt*.mp4',
+    'How can I schedule a consultation?': 'how can I schedule a consultation 1.mp4',
+    'Can I keep doing my regular daily routine while getting treatment?': 'Can I keep doing my regular daily routine while getting treatment*.mp4',
+    'default': 'Finding the answer.mp4'
+  };
+
+  // Handle video end
+  const handleVideoEnd = () => {
+    if (onVideoEnd) {
+      onVideoEnd();
+    }
+  };
+
+  // Play the video when isPlaying changes
+  useEffect(() => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.play();
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [isPlaying, currentVideo]);
+
+  return (
+    <div className="mb-6">
+      {/* Video player */}
+      <div className="mb-4 bg-black rounded-lg overflow-hidden">
+        <video 
+          ref={videoRef}
+          className="w-full h-64 object-cover"
+          src={videos[currentVideo as keyof typeof videos]}
+          controls={true}
+          autoPlay={isPlaying}
+          onEnded={handleVideoEnd}
+        />
+      </div>
+      
+      {/* Suggested questions */}
+      <div className="mb-4">
+        <h3 className="text-sm font-medium text-gray-700 mb-2">Quick Questions</h3>
+        <div className="flex flex-col space-y-2">
+          {Object.keys(videos).filter(key => key !== 'default').map((question) => (
+            <button
+              key={question}
+              onClick={() => onQuestionClick(question)}
+              className="px-3 py-2 bg-blue-50 text-blue-700 rounded-md text-sm hover:bg-blue-100 transition-colors text-left"
+            >
+              {question}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function PatientDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -285,6 +362,11 @@ export default function PatientDashboard() {
   const [wakeWordActive, setWakeWordActive] = useState(false);
   const [customWakeWord, setCustomWakeWord] = useState('Hey Dr. Miller');
   const [showWakeWordSettings, setShowWakeWordSettings] = useState(false);
+  
+  // Video state
+  const [currentVideo, setCurrentVideo] = useState('default');
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [showVideoPlayer, setShowVideoPlayer] = useState(false);
   
   // References
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -369,6 +451,24 @@ export default function PatientDashboard() {
     setTranscript('');
   }, [formatTranscription, setChatInput]);
   
+  // Handle video question click - only plays the video without sending to chat
+interface VideoQuestionClickHandler {
+    (questionKey: string): void;
+}
+
+const handleVideoQuestionClick: VideoQuestionClickHandler = useCallback((questionKey) => {
+    // Just set the video and play it, without sending to the chatbot
+    setCurrentVideo(questionKey);
+    setIsVideoPlaying(true);
+    setShowVideoPlayer(true); // Ensure video player is visible
+}, []);
+  
+  // Handle video end
+  const handleVideoEnd = useCallback(() => {
+    setIsVideoPlaying(false);
+    setShowVideoPlayer(false); // Hide video player when video ends
+  }, []);
+  
   const handleSendMessage = useCallback(async (overrideText: string | null = null) => {
     const messageText = overrideText || chatInput;
     
@@ -379,6 +479,11 @@ export default function PatientDashboard() {
     setMessages(prev => [...prev, userMessage]);
     setChatInput('');
     setIsLoading(true);
+    
+    // Play "Finding the answer" video
+    setCurrentVideo('default');
+    setIsVideoPlaying(true);
+    setShowVideoPlayer(true); // Show video player when sending message
     
     try {
       // Find relevant content from our knowledge base
@@ -459,6 +564,28 @@ export default function PatientDashboard() {
       setIsLoading(false);
     }
   }, [chatInput, isLoading, audioEnabled]);
+  
+  // Handle custom question submit from video player
+const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const customQuestionInput = form.elements.namedItem('customQuestion') as HTMLInputElement;
+    const customQuestion = customQuestionInput.value;
+    
+    if (customQuestion.trim()) {
+        // Set as chat input and send
+        setChatInput(customQuestion);
+        handleSendMessage(customQuestion);
+        
+        // Play the default "Finding the answer" video
+        setCurrentVideo('default');
+        setIsVideoPlaying(true);
+        setShowVideoPlayer(true); // Ensure video player is visible
+        
+        // Clear the input field
+        customQuestionInput.value = '';
+    }
+}, [handleSendMessage]);
   
   // ==== IMPROVED SPEECH RECOGNITION IMPLEMENTATION ====
   
@@ -916,6 +1043,8 @@ export default function PatientDashboard() {
       mood: day.mood
     }));
   };
+
+  // Toggle video player visibility - removed as we're handling this inline now
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -1524,6 +1653,21 @@ export default function PatientDashboard() {
                     </div>
                   </div>
                   <div className="flex space-x-2">
+                    <button 
+                      onClick={() => {
+                        if (!showVideoPlayer) {
+                          setShowVideoPlayer(true);
+                          setCurrentVideo('default');
+                          setIsVideoPlaying(true);
+                        } else {
+                          setShowVideoPlayer(false);
+                          setIsVideoPlaying(false);
+                        }
+                      }}
+                      className="bg-white text-gray-600 px-3 py-1 rounded-md border border-gray-300 text-sm flex items-center"
+                    >
+                      {showVideoPlayer ? "Hide" : "Show"} Video
+                    </button>
                     <button className="bg-white text-gray-600 px-3 py-1 rounded-md border border-gray-300 text-sm flex items-center">
                       <History className="h-4 w-4 mr-1" /> History
                     </button>
@@ -1539,6 +1683,18 @@ export default function PatientDashboard() {
                     </button>
                   </div>
                 </div>
+                
+                {/* Video Player Section */}
+                {showVideoPlayer && (
+                  <VideoPlayer 
+                    currentVideo={currentVideo}
+                    isPlaying={isVideoPlaying}
+                    onVideoEnd={handleVideoEnd}
+                    onQuestionClick={handleVideoQuestionClick}
+                    onCustomQuestionSubmit={handleCustomQuestionSubmit}
+                  />
+                )}
+                
                 <div className="flex-1 overflow-y-auto mb-4 space-y-4 bg-gray-50 p-4 rounded-md">
                   {messages.map((message, index) => (
                     <div key={index} className="flex">
