@@ -2,6 +2,7 @@
 import React from 'react';
 import { useState } from 'react';
 import { Menu, X, ChevronRight, CheckCircle, Brain, UserCircle, MessageSquare, History, Shield, Award, Star } from 'lucide-react';
+import Link from 'next/link';
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -32,7 +33,7 @@ export default function LandingPage() {
             </nav>
             
             <div className="hidden md:flex items-center space-x-4">
-              <a href="#" className="px-4 py-2 text-blue-700 hover:text-blue-800">Log In</a>
+              <Link href="/dashboard" className="px-4 py-2 text-blue-700 hover:text-blue-800">Dashboard</Link>
               <a href="#" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Register</a>
             </div>
             
