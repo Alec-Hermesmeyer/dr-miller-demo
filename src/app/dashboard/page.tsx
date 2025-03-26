@@ -254,7 +254,7 @@ interface VideoPlayerProps {
   isPlaying: boolean;
   onVideoEnd: () => void;
   onQuestionClick: (questionKey: string) => void;
-  onCustomQuestionSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  onCustomQuestionSubmit: (e: React.FormEvent<HTMLFormElement> & { target: { elements: { customQuestion: HTMLInputElement } } }) => void;
 }
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
@@ -264,10 +264,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onQuestionClick,
   onCustomQuestionSubmit,
 }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   
   // Video mapping
-  const videos: Record<'Will the treatment hurt?' | 'How can I schedule a consultation?' | 'Can I keep doing my regular daily routine while getting treatment?' | 'default', string> = {
+  const videos = {
     'Will the treatment hurt?': 'Will the treatment hurt*.mp4',
     'How can I schedule a consultation?': 'how can I schedule a consultation 1.mp4',
     'Can I keep doing my regular daily routine while getting treatment?': 'Can I keep doing my regular daily routine while getting treatment*.mp4',
@@ -285,9 +285,19 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   useEffect(() => {
     if (videoRef.current) {
       if (isPlaying) {
-        videoRef.current.play();
+        try {
+          videoRef.current.play().catch(error => {
+            console.error("Error playing video:", error);
+          });
+        } catch (e) {
+          console.error("Video play error:", e);
+        }
       } else {
-        videoRef.current.pause();
+        try {
+          videoRef.current.pause();
+        } catch (e) {
+          console.error("Video pause error:", e);
+        }
       }
     }
   }, [isPlaying, currentVideo]);
@@ -299,7 +309,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         <video 
           ref={videoRef}
           className="w-full h-64 object-cover"
-          src={videos[currentVideo as keyof typeof videos]}
+          src={videos[currentVideo as keyof typeof videos] || videos['default']}
           controls={true}
           autoPlay={isPlaying}
           onEnded={handleVideoEnd}
@@ -371,9 +381,25 @@ export default function PatientDashboard() {
   // References
   const chatEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
-  const audioPlayerRef = useRef<HTMLAudioElement>(new Audio());
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const finalTranscriptRef = useRef<string>('');
   const wakeWordListeningRef = useRef<boolean>(false);
+  
+  // Initialize audio player on client side only
+  useEffect(() => {
+    // Only create the Audio object in browser environment
+    if (typeof window !== 'undefined') {
+      audioPlayerRef.current = new Audio();
+    }
+    
+    return () => {
+      // Cleanup on unmount
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.src = '';
+      }
+    };
+  }, []);
   
   // Use SpeechRecognition
   const SpeechRecognition = ((window as WindowWithSpeechRecognition).SpeechRecognition || 
@@ -566,11 +592,17 @@ const handleVideoQuestionClick: VideoQuestionClickHandler = useCallback((questio
   }, [chatInput, isLoading, audioEnabled]);
   
   // Handle custom question submit from video player
-const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
+interface CustomQuestionSubmitEvent extends React.FormEvent<HTMLFormElement> {
+    target: EventTarget & {
+        elements: {
+            customQuestion: HTMLInputElement;
+        };
+    };
+}
+
+const handleCustomQuestionSubmit = useCallback((e: CustomQuestionSubmitEvent) => {
     e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const customQuestionInput = form.elements.namedItem('customQuestion') as HTMLInputElement;
-    const customQuestion = customQuestionInput.value;
+    const customQuestion = e.target.elements.customQuestion.value;
     
     if (customQuestion.trim()) {
         // Set as chat input and send
@@ -583,7 +615,7 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
         setShowVideoPlayer(true); // Ensure video player is visible
         
         // Clear the input field
-        customQuestionInput.value = '';
+        e.target.elements.customQuestion.value = '';
     }
 }, [handleSendMessage]);
   
@@ -743,10 +775,11 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
         } catch (e) {}
       }
       
-      const player = audioPlayerRef.current;
-      if (player) {
-        player.pause();
-        player.currentTime = 0;
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        try {
+          audioPlayerRef.current.currentTime = 0;
+        } catch (e) {}
       }
     };
   }, []);
@@ -943,7 +976,7 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
   
   // Text-to-speech using ElevenLabs
   const speakText = async (text: string) => {
-    if (!audioEnabled) return;
+    if (!audioEnabled || !audioPlayerRef.current) return;
     
     try {
       setIsSpeaking(true);
@@ -981,14 +1014,16 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
       }
       
       // Play new audio
-      audioPlayerRef.current.src = audioUrl;
-      audioPlayerRef.current.play();
-      
-      // When audio completes
-      audioPlayerRef.current.onended = () => {
-        setIsSpeaking(false);
-        URL.revokeObjectURL(audioUrl); // Clean up
-      };
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.src = audioUrl;
+        audioPlayerRef.current.play();
+        
+        // When audio completes
+        audioPlayerRef.current.onended = () => {
+          setIsSpeaking(false);
+          URL.revokeObjectURL(audioUrl); // Clean up
+        };
+      }
     } catch (error) {
       console.error('Error with text-to-speech:', error);
       setIsSpeaking(false);
@@ -1319,7 +1354,7 @@ const handleCustomQuestionSubmit = useCallback((e: React.FormEvent<HTMLFormEleme
                 </div>
                 <div className="mt-4 flex justify-center">
                   <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm">
-                    Log Today&apos;s Progress
+                    Log Today's Progress
                   </button>
                 </div>
               </div>
